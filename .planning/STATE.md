@@ -2,8 +2,8 @@
 
 ## Development State
 
-*   **Active Phase**: Phase 1 (Initialization)
-*   **Current Milestone**: Initial planning configuration.
+*   **Active Phase**: Wave 001 — Implement Ruff audit workflow and improve README
+*   **Current Milestone**: Starting wave implementation.
 *   **Git Position**: [Active branch or commit hash]
 
 ---
