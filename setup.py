@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import os
 import sys
 import subprocess
 import shutil
 from pathlib import Path
+
 
 class ThatchSetup:
     def __init__(self):
@@ -29,7 +29,9 @@ class ThatchSetup:
 
         print("[*] Creando entorno virtual de Python (venv)...")
         try:
-            subprocess.run([sys.executable, "-m", "venv", str(self.venv_dir)], check=True)
+            subprocess.run(
+                [sys.executable, "-m", "venv", str(self.venv_dir)], check=True
+            )
             print("[+] Entorno virtual creado exitosamente.")
         except subprocess.CalledProcessError as e:
             print(f"[-] Falló la creación del venv: {e}")
@@ -37,7 +39,7 @@ class ThatchSetup:
 
         # Determinar el binario de pip del nuevo venv
         pip_bin = self.venv_dir / "bin" / "pip"
-        
+
         print("[*] Actualizando pip e instalando PySide6...")
         try:
             subprocess.run([str(pip_bin), "install", "--upgrade", "pip"], check=True)
@@ -71,10 +73,10 @@ class ThatchSetup:
         try:
             with open(self.launcher_script, "w") as f:
                 f.write(launcher_content)
-            
+
             # Dar permisos de ejecución (chmod +x)
             self.launcher_script.chmod(self.launcher_script.stat().st_mode | 0o111)
-            print(f"[+] Comando 'thatch' creado con éxito.")
+            print("[+] Comando 'thatch' creado con éxito.")
         except Exception as e:
             print(f"[-] No se pudo escribir el script lanzador: {e}")
 
@@ -83,15 +85,17 @@ class ThatchSetup:
         self.check_system_dependencies()
         self.create_structure()
         self.create_venv()
-        
+
         print("\n[?] ¿Deseas crear un enlace global en tu sistema?")
-        print("    (Esto creará un comando 'thatch' en ~/.local/bin para ejecutarlo desde cualquier terminal)")
+        print(
+            "    (Esto creará un comando 'thatch' en ~/.local/bin para ejecutarlo desde cualquier terminal)"
+        )
         try:
             resp = input("    Instalar globalmente [S/n]: ").strip().lower()
         except EOFError:
             resp = "s"
-            
-        if resp in ('', 's', 'si', 'y', 'yes'):
+
+        if resp in ("", "s", "si", "y", "yes"):
             self.create_global_link()
             print("\n[+] Instalación completada.")
             print("[!] Nota: Asegúrate de que '~/.local/bin' esté en tu $PATH.")
@@ -101,6 +105,7 @@ class ThatchSetup:
             print("[*] Puedes ejecutar la app usando tu entorno virtual local:")
             print("    source venv/bin/activate")
             print("    python thatch.py")
+
 
 if __name__ == "__main__":
     setup = ThatchSetup()

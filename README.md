@@ -18,8 +18,8 @@ Thatch is rewritten from scratch to offer a **simpler, native, secure, and highl
 | **Registry Performance** | **Ultra-snappy Line-by-Line Parser**: Reads `.reg` files line-by-line under micro-seconds with **0% Regex CPU overhead** and negligible memory footprint. | **Heavy Python Parsers**: Prone to CPU spikes and memory pauses when parsing large (10MB+) registries. |
 | **Terminal Integration** | **Direct & Native**: Opens your system's native terminal preloaded with WINEPREFIX, runners, and variables for direct shell scripting. | **Complex**: Restrictive sandboxed shell access, making custom scripts or terminal-based debugging difficult. |
 | **Disk Space Conservation** | **Aggressive Sweeper**: Downloading a new Wine runner automatically purges old version folders, keeping disk footprints strictly clean. | **Accumulative**: Retains older downloaded compiler versions indefinitely, easily wasting tens of gigabytes of disk space. |
-| **Recipe Management** | **Lightweight JSON**: Complete environment setups, runner specs, and performance parameters in simple 10-line JSON recipes. | **Heavy Database**: Relies on a massive SQLite/state schema that can easily corrupt or desynchronize. |
-| **Dependency Injection** | **Direct Winetricks Wrapper**: Integrates cleanly with your native `winetricks` script, categorized under a sleek filter bar (`[All] [Libraries] [Fonts] [Settings]`). | **Custom Wrapper**: Relies on internal packages database mirrors which lag behind official updates. |
+| **Recipe Management** | **Map Book (JSON Maps)**: Complete environment setups, runner specs, and performance parameters in simple, editable JSON maps directly from the UI. | **Heavy Database**: Relies on a massive SQLite/state schema that can easily corrupt or desynchronize. |
+| **Dependency Injection** | **Direct Winetricks Wrapper**: Integrates cleanly with native `winetricks`. Features a built-in Firejail bypass using `curl` to guarantee successful component injection even on highly restricted systems. | **Custom Wrapper**: Relies on internal packages database mirrors which lag behind official updates. |
 
 ---
 
@@ -75,13 +75,30 @@ sudo apt install python3 python3-venv winetricks wine
    ```bash
    python3 -m venv venv
    source venv/bin/activate
-   pip install -r setup.py # or pip install -r requirements.txt
+   pip install -r requirements.txt
    ```
 
 3. **Launch Thatch**:
    ```bash
    ./venv/bin/python thatch.py
    ```
+
+---
+
+## 📋 Developer & Auditing Workflow
+
+Thatch strictly adheres to a clean-code standard and uses **Ruff** for sub-millisecond linting and formatting. 
+If you are contributing code or creating new `views`, please run the automated audit script before committing:
+
+```bash
+# Install Ruff via pacman or pipx:
+sudo pacman -S ruff
+
+# Run the auditor to auto-fix and format your code:
+./scripts/audit.sh
+```
+
+A GitHub Action will automatically verify that no unused imports or styling violations are merged into `main`.
 
 ---
 
@@ -98,7 +115,8 @@ thatch/
 │       ├── __init__.py          # Modular views exports
 │       ├── chests_view.py       # Treasure prefix grid list
 │       ├── chest_details_view.py# Detailed tabs (Details, Programs, Deps, Settings)
-│       ├── cargo_view.py        # App catalog and search store
+│       ├── cargo_view.py        # App catalog and Map Book store
+│       ├── recipes_view.py      # Integrated Recipe/Map JSON Editor
 │       ├── wine_runners_view.py # Asynchronous downloader and old runtime cleaner
 │       ├── preferences_view.py  # Consolidated defaults and path settings
 │       ├── create_chest_wizard.py# Stepper visual wizard

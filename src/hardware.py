@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
+
 def detect_gpu() -> str:
     """
     Detects the system's primary GPU manufacturer (AMD, Nvidia, Intel, or unknown)
@@ -13,11 +14,7 @@ def detect_gpu() -> str:
 
     # Hexadecimal PCI Vendor IDs:
     # AMD: 0x1002, Nvidia: 0x10de, Intel: 0x8086
-    vendors = {
-        "0x1002": "amd",
-        "0x10de": "nvidia",
-        "0x8086": "intel"
-    }
+    vendors = {"0x1002": "amd", "0x10de": "nvidia", "0x8086": "intel"}
 
     try:
         # Check all DRM cards
@@ -35,7 +32,12 @@ def detect_gpu() -> str:
     # Fallback: check standard lspci if sysfs parsing failed
     try:
         import subprocess
-        lspci_out = subprocess.check_output("lspci", shell=True, stderr=subprocess.DEVNULL).decode("utf-8").lower()
+
+        lspci_out = (
+            subprocess.check_output("lspci", shell=True, stderr=subprocess.DEVNULL)
+            .decode("utf-8")
+            .lower()
+        )
         if "nvidia" in lspci_out:
             return "nvidia"
         elif "amd" in lspci_out or "ati" in lspci_out:
@@ -47,21 +49,24 @@ def detect_gpu() -> str:
 
     return "unknown"
 
-def compile_performance_env(gpu_type: str, recipe_env: dict[str, str]) -> dict[str, str]:
+
+def compile_performance_env(
+    gpu_type: str, recipe_env: dict[str, str]
+) -> dict[str, str]:
     """
     Compiles the final, optimal environment variables dictionary for launching the game.
     Tailors graphics overrides based on the detected GPU and merges them with recipe overrides.
     """
     compiled_env = os.environ.copy()
-    
+
     # 1. Base CachyOS / Zen Kernel synchronization optimizations
     base_optimizations = {
         "WINEESYNC": "1",
         "WINEMFSYNC": "1",
         "WINE_FULLSCREEN_FSR": "1",
-        "WINE_FS_FSR_STRENGTH": "5"
+        "WINE_FS_FSR_STRENGTH": "5",
     }
-    
+
     for k, v in base_optimizations.items():
         compiled_env[k] = v
 
@@ -87,6 +92,7 @@ def compile_performance_env(gpu_type: str, recipe_env: dict[str, str]) -> dict[s
         compiled_env[k] = str(v)
 
     return compiled_env
+
 
 def detect_performance_wrapper() -> list[str]:
     """

@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 # views/__init__.py
 from .diagnostic_log import DiagnosticLogCard
 from .zeus_dialog import ZeusInstallerDialog

@@ -368,13 +368,14 @@ QTextEdit#ConsoleLog {
 }
 """
 
+
 def apply_theme(app: QApplication) -> None:
     """Applies the premium, sleek dark theme to the Qt App."""
     font = QFont("Inter", 10)
     if not font.exactMatch():
         font = QFont("Segoe UI", 10)
     app.setFont(font)
-    
+
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor("#0f0f13"))
     palette.setColor(QPalette.WindowText, QColor("#ffffff"))
@@ -389,5 +390,5 @@ def apply_theme(app: QApplication) -> None:
     palette.setColor(QPalette.Highlight, QColor("#4da6ff"))
     palette.setColor(QPalette.HighlightedText, QColor("#ffffff"))
     app.setPalette(palette)
-    
+
     app.setStyleSheet(STYLESHEET)

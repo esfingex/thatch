@@ -1,23 +1,32 @@
 # views/diagnostic_log.py
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QTextEdit, QProgressBar, QWidget
+from PySide6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QLabel,
+    QTextEdit,
+    QProgressBar,
+    QWidget,
+)
 from PySide6.QtCore import Qt
+
 
 class DiagnosticLogCard(QFrame):
     """
     QtWidgets microcomponent displaying real-time execution outputs
     and progress status of background tasks.
     """
+
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("CardFrame")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
-        
+
         card_lbl = QLabel("Bitácora de Diagnóstico (Recetas):")
         card_lbl.setObjectName("CardTitle")
         layout.addWidget(card_lbl)
-        
+
         self.console_log = QTextEdit()
         self.console_log.setObjectName("ConsoleLog")
         self.console_log.setReadOnly(True)
@@ -25,7 +34,7 @@ class DiagnosticLogCard(QFrame):
         self.console_log.setMaximumHeight(220)
         self.console_log.hide()
         layout.addWidget(self.console_log)
-        
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.progress_bar)

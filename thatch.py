@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 #!/usr/bin/env python3
 import sys
 import signal
@@ -9,14 +10,15 @@ sys.path.insert(0, str(src_dir))
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
-from main import ThatchLauncher
-from style import apply_theme
+from src.main import ThatchLauncher
+from src.style import apply_theme
 
 if __name__ == "__main__":
     # Allow Ctrl+C to interrupt the Qt event loop
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    
+
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
     icon_path = src_dir / "assets" / "icon.png"
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))

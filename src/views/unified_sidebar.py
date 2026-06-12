@@ -1,34 +1,43 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QPushButton, QButtonGroup, QWidget
+from PySide6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QButtonGroup,
+    QWidget,
+)
 from PySide6.QtCore import Signal, Qt, Slot
 from i18n import _
+
 
 class UnifiedSidebar(QFrame):
     """
     Sleek, unified sidebar navigation component matching Figma mockups.
     Manages active views: Chests, Cargo, Wine Runners, and Preferences.
     """
-    view_changed = Signal(str) # Emits: "chests", "cargo", "runners", "preferences"
+
+    view_changed = Signal(str)  # Emits: "chests", "cargo", "runners", "preferences"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("SidebarFrame")
         self.setFixedWidth(200)
         self.setAttribute(Qt.WA_StyledBackground, True)
-        
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 20, 12, 20)
         layout.setSpacing(8)
-        
+
         # 1. Header Title
         self.lbl_title = QLabel(_("sidebar_title"))
         self.lbl_title.setObjectName("SidebarTitle")
         self.lbl_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         layout.addWidget(self.lbl_title)
-        
+
         # Button Group to make buttons mutually exclusive
         self.btn_group = QButtonGroup(self)
         self.btn_group.setExclusive(True)
-        
+
         # 2. Chests Navigation Button
         self.btn_chests = QPushButton(_("sidebar_chests"))
         self.btn_chests.setObjectName("SidebarBtn")
@@ -38,7 +47,7 @@ class UnifiedSidebar(QFrame):
         self.btn_chests.clicked.connect(lambda: self._on_btn_clicked("chests"))
         self.btn_group.addButton(self.btn_chests)
         layout.addWidget(self.btn_chests)
-        
+
         # 3. Cargo Navigation Button
         self.btn_cargo = QPushButton(_("sidebar_cargo"))
         self.btn_cargo.setObjectName("SidebarBtn")
@@ -47,7 +56,7 @@ class UnifiedSidebar(QFrame):
         self.btn_cargo.clicked.connect(lambda: self._on_btn_clicked("cargo"))
         self.btn_group.addButton(self.btn_cargo)
         layout.addWidget(self.btn_cargo)
-        
+
         # 4. Wine Runners Navigation Button
         self.btn_runners = QPushButton(_("sidebar_runners"))
         self.btn_runners.setObjectName("SidebarBtn")
@@ -56,7 +65,7 @@ class UnifiedSidebar(QFrame):
         self.btn_runners.clicked.connect(lambda: self._on_btn_clicked("runners"))
         self.btn_group.addButton(self.btn_runners)
         layout.addWidget(self.btn_runners)
-        
+
         # 5. Recipes Navigation Button
         self.btn_recipes = QPushButton(_("sidebar_recipes"))
         self.btn_recipes.setObjectName("SidebarBtn")
@@ -65,10 +74,10 @@ class UnifiedSidebar(QFrame):
         self.btn_recipes.clicked.connect(lambda: self._on_btn_clicked("recipes"))
         self.btn_group.addButton(self.btn_recipes)
         layout.addWidget(self.btn_recipes)
-        
+
         # Spacer to push preferences to the bottom
         layout.addStretch(1)
-        
+
         # 5. Preferences Button (bottom)
         self.btn_prefs = QPushButton(_("sidebar_preferences"))
         self.btn_prefs.setObjectName("SidebarBtn")
@@ -77,10 +86,12 @@ class UnifiedSidebar(QFrame):
         self.btn_prefs.clicked.connect(lambda: self._on_btn_clicked("preferences"))
         self.btn_group.addButton(self.btn_prefs)
         layout.addWidget(self.btn_prefs)
-        
+
         # 6. Version indicator (Sleek minimalist footer)
         self.lbl_version = QLabel("v1.0.1")
-        self.lbl_version.setStyleSheet("color: #48484a; font-size: 10px; font-weight: bold; margin-left: 16px; margin-top: 8px;")
+        self.lbl_version.setStyleSheet(
+            "color: #48484a; font-size: 10px; font-weight: bold; margin-left: 16px; margin-top: 8px;"
+        )
         layout.addWidget(self.lbl_version)
 
     @Slot(str)
@@ -111,4 +122,3 @@ class UnifiedSidebar(QFrame):
         self.btn_runners.setText(_("sidebar_runners"))
         self.btn_recipes.setText(_("sidebar_recipes"))
         self.btn_prefs.setText(_("sidebar_preferences"))
-

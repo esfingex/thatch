@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
-import os
 import sys
 import subprocess
 import shutil
 from pathlib import Path
+
 
 class ThatchCompiler:
     def __init__(self):
         self.base_dir = Path(".").resolve()
         self.venv_bin = self.base_dir / "venv" / "bin"
         self.pyinstaller_bin = self.venv_bin / "pyinstaller"
-        self.script_to_compile = self.base_dir / "thatch.py"  # Cambia a thatch.py si renombraste el archivo
+        self.script_to_compile = (
+            self.base_dir / "thatch.py"
+        )  # Cambia a thatch.py si renombraste el archivo
 
     def install_compiler_deps(self):
         """Asegura que PyInstaller esté en el entorno virtual"""
         pip_bin = self.venv_bin / "pip"
         if not pip_bin.exists():
-            print("[-] Error: No se encontró el entorno virtual 'venv'. Ejecuta primero tu instalador.")
+            print(
+                "[-] Error: No se encontró el entorno virtual 'venv'. Ejecuta primero tu instalador."
+            )
             sys.exit(1)
-            
+
         print("[*] Instalando instalador de binarios (PyInstaller) en el venv...")
         try:
             subprocess.run([str(pip_bin), "install", "pyinstaller"], check=True)
@@ -29,11 +33,13 @@ class ThatchCompiler:
     def compile_binary(self):
         """Compila el script a un único ejecutable nativo de Linux"""
         if not self.script_to_compile.exists():
-            print(f"[-] Error: No se encuentra el archivo de código fuente: {self.script_to_compile}")
+            print(
+                f"[-] Error: No se encuentra el archivo de código fuente: {self.script_to_compile}"
+            )
             sys.exit(1)
 
         print(f"[*] Compilando {self.script_to_compile.name} a binario nativo...")
-        
+
         # Parámetros de PyInstaller:
         # --onefile: Empaqueta todo en un único binario ejecutable
         # --clean: Limpia la caché antes de construir
@@ -42,8 +48,9 @@ class ThatchCompiler:
             str(self.pyinstaller_bin),
             "--onefile",
             "--clean",
-            "--name", "thatch",
-            str(self.script_to_compile)
+            "--name",
+            "thatch",
+            str(self.script_to_compile),
         ]
 
         try:
@@ -63,7 +70,7 @@ class ThatchCompiler:
             target_dir.mkdir(parents=True, exist_ok=True)
             print(f"[*] Desplegando ejecutable en: {target_binary}")
             shutil.copy2(dist_binary, target_binary)
-            
+
             # Limpieza de temporales de compilación para dejar el repo limpio
             print("[*] Limpiando residuos de compilación...")
             shutil.rmtree(self.base_dir / "build", ignore_errors=True)
@@ -71,8 +78,10 @@ class ThatchCompiler:
             spec_file = self.base_dir / "thatch.spec"
             if spec_file.exists():
                 spec_file.unlink()
-                
-            print("[+] ¡Listo! El binario nativo 'thatch' está operativo y el entorno limpio.")
+
+            print(
+                "[+] ¡Listo! El binario nativo 'thatch' está operativo y el entorno limpio."
+            )
         else:
             print("[-] Error: No se encontró el binario generado en la carpeta 'dist'.")
 
@@ -80,6 +89,7 @@ class ThatchCompiler:
         self.install_compiler_deps()
         self.compile_binary()
         self.deploy_binary()
+
 
 if __name__ == "__main__":
     compiler = ThatchCompiler()

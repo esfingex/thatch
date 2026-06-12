@@ -24,6 +24,7 @@ def set_active_lang(lang: str) -> None:
     ACTIVE_LANG = lang
     try:
         from database import set_setting
+
         set_setting("app_language", lang)
     except Exception:
         pass
@@ -34,6 +35,7 @@ def load_lang_from_db() -> None:
     global ACTIVE_LANG
     try:
         from database import get_setting
+
         saved = get_setting("app_language", "")
         if saved in ("en", "es"):
             ACTIVE_LANG = saved
@@ -45,7 +47,7 @@ def load_locale(lang):
     """Loads a specific locale JSON into the STRINGS cache."""
     if lang in STRINGS:
         return STRINGS[lang]
-    
+
     locale_file = LOCALES_DIR / f"{lang}.json"
     if locale_file.exists():
         try:
@@ -56,12 +58,13 @@ def load_locale(lang):
             print(f"[i18n] Error loading locale resource {lang}: {e}")
     return {}
 
+
 def _(key, **kwargs):
     """Translates the given key into the active system language."""
     # Ensure active and English fallback locales are loaded
     lang_dict = load_locale(ACTIVE_LANG)
     fallback_dict = load_locale("en")
-    
+
     text = lang_dict.get(key, fallback_dict.get(key, key))
     if kwargs:
         return text.format(**kwargs)

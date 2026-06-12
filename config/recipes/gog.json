@@ -10,7 +10,9 @@
     "dxvk",
     "msxml6",
     "wmp11",
-    "allcodecs"
+    "allcodecs",
+    "corefonts",
+    "vkd3d"
   ],
   "recommended_runner": "GE-Proton10-34",
   "performance_env": {

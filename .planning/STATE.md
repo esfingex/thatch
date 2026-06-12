@@ -3,7 +3,7 @@
 ## Development State
 
 *   **Active Phase**: Wave 001 — Implement Ruff audit workflow and improve README
-*   **Current Milestone**: Starting wave implementation.
+*   **Current Milestone**: Wave completed successfully.
 *   **Git Position**: [Active branch or commit hash]
 
 ---
@@ -20,3 +20,10 @@
 
 ## Active Blockers
 *   None.
+
+
+### ADR: [Title]
+*   **Date**: 2026-06-12
+*   **Context**: [Details]
+*   **Decision**: [Details]
+
