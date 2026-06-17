@@ -133,4 +133,4 @@ thatch/
 
 ## 🛡️ License
 
-Thatch is open-source software licensed under the **MIT License**.
+Thatch is open-source software licensed under the **GNU General Public License v3.0 (GPLv3)**.
