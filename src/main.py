@@ -714,6 +714,48 @@ class ThatchLauncher(QMainWindow):
 
         return env, None
 
+    def _get_wine_cmd(self, runner_path, exe_path: str | Path | None = None) -> str:
+        """Returns the correct wine or wine64 binary for the runner.
+        Auto-detects PE32+ (x64) executables and upgrades to wine64 automatically."""
+        if runner_path and runner_path.exists():
+            bin_dir = (
+                runner_path / "files" / "bin"
+                if (runner_path / "files").exists()
+                else runner_path / "bin"
+            )
+        else:
+            bin_dir = None
+
+        # Detect exe architecture via PE header
+        is_x64 = False
+        if exe_path:
+            try:
+                with open(exe_path, "rb") as f:
+                    # Read DOS header e_lfanew (offset 0x3C) → PE header offset
+                    f.seek(0x3C)
+                    pe_offset = int.from_bytes(f.read(4), "little")
+                    f.seek(pe_offset + 4)  # Skip "PE\0\0" signature
+                    machine = int.from_bytes(f.read(2), "little")
+                    # 0x8664 = AMD64 (x86_64), 0xAA64 = ARM64
+                    is_x64 = machine in (0x8664, 0xAA64)
+            except Exception:
+                pass  # Fallback to wine (32-bit) on any read error
+
+        wine_bin = "wine64" if is_x64 else "wine"
+
+        if bin_dir:
+            candidate = bin_dir / wine_bin
+            if candidate.exists():
+                return str(candidate)
+            # Fallback: try the other variant
+            fallback = bin_dir / ("wine" if is_x64 else "wine64")
+            if fallback.exists():
+                return str(fallback)
+            return str(bin_dir / "wine")
+
+        # System wine fallback
+        return wine_bin
+
     # ─── SIDEBAR EVENT HANDLERS ────────────────────────────────────────────────
 
     @Slot(str)
@@ -767,14 +809,7 @@ class ThatchLauncher(QMainWindow):
         # Build Wine environment and find the core wine command
         env, runner_path = self.get_wine_env(name, recipe_id, runner_name)
 
-        wine_exe = "wine"
-        if runner_path and runner_path.exists():
-            bin_dir = (
-                runner_path / "files" / "bin"
-                if (runner_path / "files").exists()
-                else runner_path / "bin"
-            )
-            wine_exe = str(bin_dir / "wine")
+        wine_exe = self._get_wine_cmd(runner_path)
 
         self.toast.show_message(
             f"Creando e inicializando contenedor de Wine para '{name}'..."
@@ -1123,14 +1158,8 @@ class ThatchLauncher(QMainWindow):
             game_info.get("runner"),
         )
 
-        wine_cmd = "wine"
-        if runner_path and runner_path.exists():
-            bin_dir = (
-                runner_path / "files" / "bin"
-                if (runner_path / "files").exists()
-                else runner_path / "bin"
-            )
-            wine_cmd = str(bin_dir / "wine")
+        exe_for_arch = Path(game_info.get("exe", "")) if game_info else None
+        wine_cmd = self._get_wine_cmd(runner_path, exe_for_arch)
 
         # Target Monitor setting
         target_monitor = game_info.get("target_monitor", "default")
@@ -1421,14 +1450,7 @@ class ThatchLauncher(QMainWindow):
                 prefix_name, recipe_id, game_info.get("runner") if game_info else None
             )
 
-            wine_cmd = "wine"
-            if runner_path and runner_path.exists():
-                bin_dir = (
-                    runner_path / "files" / "bin"
-                    if (runner_path / "files").exists()
-                    else runner_path / "bin"
-                )
-                wine_cmd = str(bin_dir / "wine")
+            wine_cmd = self._get_wine_cmd(runner_path)
 
             # The uninstall string may contain quotes and arguments
             import shlex
@@ -1639,14 +1661,8 @@ class ThatchLauncher(QMainWindow):
             game_info.get("runner"),
         )
 
-        wine_cmd = "wine"
-        if runner_path and runner_path.exists():
-            bin_dir = (
-                runner_path / "files" / "bin"
-                if (runner_path / "files").exists()
-                else runner_path / "bin"
-            )
-            wine_cmd = str(bin_dir / "wine")
+        exe_for_arch = Path(game_info.get("exe", "")) if game_info else None
+        wine_cmd = self._get_wine_cmd(runner_path, exe_for_arch)
 
         # Check virtual desktop
         vd_enabled = bool(game_info.get("virtual_desktop", False))
