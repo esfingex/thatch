@@ -2094,7 +2094,9 @@ class ThatchLauncher(QMainWindow):
             # Spawn installer asynchronously via QProcess so we can trigger the link dialog ONLY when it exits!
             # Keeps user desktop completely clean during installation process!
             self.installer_process = QProcess()
-            q_env = QProcessEnvironment()
+            # Start from the full system environment (preserves WAYLAND_DISPLAY, XDG_RUNTIME_DIR,
+            # DBUS_SESSION_BUS_ADDRESS, etc.) and overlay our Wine/performance env on top.
+            q_env = QProcessEnvironment.systemEnvironment()
             for k, v in env.items():
                 q_env.insert(k, v)
             self.installer_process.setProcessEnvironment(q_env)
@@ -2298,7 +2300,7 @@ class ThatchLauncher(QMainWindow):
                     pass
 
         self.process = QProcess()
-        q_env = QProcessEnvironment()
+        q_env = QProcessEnvironment.systemEnvironment()
         for k, v in env.items():
             q_env.insert(k, v)
         self.process.setProcessEnvironment(q_env)
