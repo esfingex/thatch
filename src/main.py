@@ -2510,7 +2510,7 @@ class ThatchLauncher(QMainWindow):
             self.toast.adjust_position()
 
     def closeEvent(self, event) -> None:
-        if hasattr(self, "tray_icon") and self.tray_icon.isVisible():
+        if hasattr(self, "tray_icon") and self.tray_icon is not None and self.tray_icon.isVisible():
             event.ignore()
             self.hide()
             from i18n import _
