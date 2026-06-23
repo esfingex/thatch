@@ -12,6 +12,7 @@
   ],
   "recommended_runner": "GE-Proton10-34",
   "performance_env": {
+    "WINEARCH": "win64",
     "WINEESYNC": "1",
     "WINEMFSYNC": "1",
     "WINEDLLOVERRIDES": "winegstreamer=",
