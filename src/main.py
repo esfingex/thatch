@@ -710,6 +710,23 @@ class ThatchLauncher(QMainWindow):
             env["LD_LIBRARY_PATH"] = (
                 f"{lib_dir}:{lib64_dir}:{env.get('LD_LIBRARY_PATH', '')}"
             )
+
+            # Populate WINEDLLPATH for custom runners to prevent page fault crashes
+            # (e.g. Proton's wined3d/dxgi needing libvkd3d DLLs)
+            dllpaths = []
+            for path in [
+                lib_dir / "vkd3d",
+                lib64_dir / "vkd3d",
+                lib_dir / "wine",
+                lib64_dir / "wine",
+            ]:
+                if path.exists():
+                    dllpaths.append(str(path))
+            if dllpaths:
+                if "WINEDLLPATH" in env:
+                    dllpaths.append(env["WINEDLLPATH"])
+                env["WINEDLLPATH"] = ":".join(dllpaths)
+
             return env, runner_path
 
         return env, None
@@ -760,7 +777,13 @@ class ThatchLauncher(QMainWindow):
                 return str(fallback)
             return str(bin_dir / "wine")
 
-        # System wine fallback
+        # System wine fallback: prefer absolute path to bypass firejail/usr/local/bin wrappers
+        for candidate in ["/usr/bin/wine64", "/usr/bin/wine"]:
+            if is_x64 and candidate == "/usr/bin/wine64" and Path(candidate).exists():
+                return candidate
+            if candidate == "/usr/bin/wine" and Path(candidate).exists():
+                return candidate
+
         return wine_bin
 
     # ─── SIDEBAR EVENT HANDLERS ────────────────────────────────────────────────

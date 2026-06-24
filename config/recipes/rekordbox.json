@@ -10,7 +10,7 @@
     "msxml6",
     "win10"
   ],
-  "recommended_runner": "GE-Proton10-34",
+  "recommended_runner": "Wine del Sistema (/usr/bin/wine)",
   "performance_env": {
     "WINEARCH": "win64",
     "WINEESYNC": "1",
