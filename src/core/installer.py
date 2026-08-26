@@ -172,13 +172,19 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         except Exception:
             pass
 
-    # Ensure no D: symlink is present so installer defaults target destination to C:\Games\
+    # Map D: drive symlink to installer directory to eliminate DOS wildcard bracket parsing issues ([FitGirl Repack])
     d_drive = dosdevices_dir / "d:"
     if d_drive.is_symlink() or d_drive.exists():
         try:
             d_drive.unlink()
         except Exception:
             pass
+    try:
+        d_drive.symlink_to(setup_dir)
+    except Exception:
+        pass
+
+    setup_dos_path = f"D:\\{setup_file.name}"
 
     vd_enabled = (
         bool(associated_game.get("virtual_desktop", False))
@@ -196,11 +202,11 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         args = [
             "explorer",
             f"/desktop=Thatch,{vd_res}",
-            str(setup_file),
+            setup_dos_path,
             "/DIR=C:\\Games",
         ]
     else:
-        args = [str(setup_file), "/DIR=C:\\Games"]
+        args = [setup_dos_path, "/DIR=C:\\Games"]
 
     # Force disable Esync and Fsync during setup execution to prevent cls-lolz thread deadlocks
     env["WINEESYNC"] = "0"
