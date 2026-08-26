@@ -373,19 +373,18 @@ class ThatchDB:
     # ─── Prefix Directories Lookup ───────────────────────────────────────────
 
     def list_existing_prefixes(self) -> list[str]:
-        """Lists folders inside get_prefixes_dir() to enable prefix sharing."""
-        p_dir = self.get_prefixes_dir()
-        if not p_dir.exists():
-            return []
-        return sorted(
-            [
-                entry.name
-                for entry in p_dir.iterdir()
-                if entry.is_dir()
-                and not entry.name.startswith(".")
-                and entry.name != "temp_zeus_prefix"
-            ]
-        )
+        """Lists folders inside get_prefixes_dir() and workspace/prefixes to enable prefix sharing."""
+        prefixes = set()
+        for p_dir in [self.get_prefixes_dir(), self.base_dir / "prefixes"]:
+            if p_dir.exists():
+                for entry in p_dir.iterdir():
+                    if (
+                        entry.is_dir()
+                        and not entry.name.startswith(".")
+                        and entry.name != "temp_zeus_prefix"
+                    ):
+                        prefixes.add(entry.name)
+        return sorted(list(prefixes))
 
     def rename_prefix(self, old_name: str, new_name: str) -> bool:
         """Renames an existing chest WINEPREFIX folder and updates all referencing game records."""
