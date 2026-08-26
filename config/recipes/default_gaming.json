@@ -1,6 +1,10 @@
 {
   "display_name": "Juego Genérico (Estándar)",
-  "required_verbs": [],
+  "required_verbs": [
+    "vcrun2022",
+    "vcrun2013",
+    "d3dcompiler_47"
+  ],
   "recommended_runner": "wine-cachyos",
   "performance_env": {
     "WINEESYNC": "1",

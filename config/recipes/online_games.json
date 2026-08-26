@@ -1,6 +1,8 @@
 {
   "display_name": "Juegos Online (DXVK/VKD3D)",
   "required_verbs": [
+    "vcrun2022",
+    "vcrun2013",
     "dxvk",
     "vkd3d",
     "corefonts"
