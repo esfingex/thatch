@@ -12,7 +12,9 @@
     "WINEMFSYNC": "0",
     "WINEFSYNC": "0",
     "WINE_LARGE_ADDRESS_AWARE": "0",
-    "PROTON_FORCE_LARGE_ADDRESS_AWARE": "0"
+    "PROTON_FORCE_LARGE_ADDRESS_AWARE": "0",
+    "XTOOL_THREADS": "4",
+    "SREP_THREADS": "4"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con límite estricto de 2GB de RAM para evitar desbordamiento de punteros 32-bit."
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con límite de hilos XTOOL/SREP para evitar bloqueos de tuberías en Linux."
 }

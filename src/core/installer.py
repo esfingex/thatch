@@ -213,6 +213,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["WINEFSYNC"] = "0"
     env["WINEMFSYNC"] = "0"
 
+    # Limit xtool and srep decompressor thread contention on Linux anonymous pipes (prevent 28-thread pipe deadlocks)
+    env["XTOOL_THREADS"] = "4"
+    env["SREP_THREADS"] = "4"
+
     # Force disable Large Address Aware (LAA=0) during installer execution to cap memory allocations below 2GB
     # This prevents 32-bit pointer overflow in unarc.dll / cls-lolz.dll regardless of installer options!
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
