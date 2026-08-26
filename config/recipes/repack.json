@@ -13,8 +13,10 @@
     "WINEFSYNC": "0",
     "WINE_LARGE_ADDRESS_AWARE": "0",
     "PROTON_FORCE_LARGE_ADDRESS_AWARE": "0",
+    "WINE_SIMULATE_WRITE_COPY": "1",
+    "WINE_DISABLE_FAST_ATTACH": "1",
     "XTOOL_THREADS": "4",
     "SREP_THREADS": "4"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con límite de hilos XTOOL/SREP para evitar bloqueos de tuberías en Linux."
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con simulación de páginas Copy-On-Write para evitar bucles de señales WoW64 en Linux."
 }

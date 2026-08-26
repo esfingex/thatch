@@ -65,6 +65,8 @@ def compile_performance_env(
         "WINEMFSYNC": "1",
         "WINE_FULLSCREEN_FSR": "1",
         "WINE_FS_FSR_STRENGTH": "5",
+        "WINE_SIMULATE_WRITE_COPY": "1",
+        "WINE_DISABLE_FAST_ATTACH": "1",
     }
 
     for k, v in base_optimizations.items():
