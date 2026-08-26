@@ -111,19 +111,16 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         associated_game.get("runner") if associated_game else None,
     )
 
-    installer_arch = get_pe_arch(installer_path)
-    wine_cmd = get_wine_cmd(parent_launcher.db, runner_path, installer_path)
-    if installer_arch == "x64":
-        env["WINEARCH"] = "win64"
-        parent_launcher.toast.show_message(
-            "Instalador x64 detectado → usando wine64 con prefijo 64-bit..."
-        )
-    else:
-        env.pop("WINEARCH", None)
-
-    # Ensure writeable drive_c directories (Games, Temp, AppData, system32, syswow64) exist in prefix
     prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name
     drive_c = prefix_path / "drive_c"
+    syswow64 = drive_c / "windows" / "syswow64"
+
+    installer_arch = get_pe_arch(installer_path)
+    wine_cmd = get_wine_cmd(parent_launcher.db, runner_path, installer_path)
+    if installer_arch == "x64" or syswow64.exists():
+        env["WINEARCH"] = "win64"
+
+    # Ensure writeable drive_c directories (Games, Temp, AppData, system32, syswow64) exist in prefix
     (drive_c / "Games").mkdir(parents=True, exist_ok=True)
     (drive_c / "windows" / "temp").mkdir(parents=True, exist_ok=True)
     (drive_c / "users" / "steamuser" / "Temp").mkdir(parents=True, exist_ok=True)
@@ -132,7 +129,6 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     )
 
     system32 = drive_c / "windows" / "system32"
-    syswow64 = drive_c / "windows" / "syswow64"
     system32.mkdir(parents=True, exist_ok=True)
     syswow64.mkdir(parents=True, exist_ok=True)
 
