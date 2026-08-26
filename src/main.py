@@ -433,6 +433,7 @@ class ThatchLauncher(QMainWindow):
             "cargo": 2,
             "preferences": 3,
             "wine_runners": 4,
+            "runners": 4,
             "recipes": 5,
         }
         idx = view_map.get(view_name, 0)
@@ -1296,6 +1297,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     app = QApplication(sys.argv)
+    app.setApplicationName("Thatch")
+    app.setApplicationDisplayName("Thatch")
+    app.setDesktopFileName("thatch-installer")
     app.setQuitOnLastWindowClosed(False)
     icon_path = Path(__file__).parent / "assets" / "icon.png"
     if icon_path.exists():
