@@ -131,6 +131,7 @@ class ChestDetailsView(QWidget):
     run_requested = Signal(str)
     browse_requested = Signal(str)
     terminal_requested = Signal(str)
+    rename_requested = Signal(str)  # prefix_name
     delete_requested = Signal(str)
     add_program_requested = Signal(str)
     run_program_requested = Signal(str, str)  # prefix_name, game_name
@@ -210,6 +211,13 @@ class ChestDetailsView(QWidget):
             lambda: self.terminal_requested.emit(self.prefix_name)
         )
         header_layout.addWidget(self.btn_terminal)
+
+        self.btn_rename = QPushButton("✏️  Renombrar")
+        self.btn_rename.setCursor(Qt.PointingHandCursor)
+        self.btn_rename.clicked.connect(
+            lambda: self.rename_requested.emit(self.prefix_name)
+        )
+        header_layout.addWidget(self.btn_rename)
 
         self.btn_delete = QPushButton("🗑")
         self.btn_delete.setObjectName("RedBtnText")

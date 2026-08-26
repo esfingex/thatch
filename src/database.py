@@ -9,17 +9,48 @@ class ThatchDB:
         # Resolve base directory relative to this source file (src/database.py)
         self.base_dir = Path(__file__).parent.parent.resolve()
 
-        self.sqlite_path = db_path if db_path else self.base_dir / "thatch_db.sqlite"
+        # User data directory standard (~/.local/share/thatch)
+        self.user_data_dir = Path.home() / ".local" / "share" / "thatch"
+        self.user_data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Database path (default to ~/.local/share/thatch/thatch_db.sqlite unless specified or legacy exists)
+        legacy_db = self.base_dir / "thatch_db.sqlite"
+        user_db = self.user_data_dir / "thatch_db.sqlite"
+
+        if db_path:
+            self.sqlite_path = db_path
+        elif user_db.exists():
+            self.sqlite_path = user_db
+        elif legacy_db.exists():
+            # Migrate legacy db to user data dir
+            try:
+                shutil.copy2(legacy_db, user_db)
+                self.sqlite_path = user_db
+            except Exception:
+                self.sqlite_path = legacy_db
+        else:
+            self.sqlite_path = user_db
+
         self.json_path = self.base_dir / "thatch_db.json"
         self.recipes_dir = self.base_dir / "config" / "recipes"
 
-        # Ensure default directories exist
-        self.default_prefixes_dir = self.base_dir / "prefixes"
-        self.default_runners_dir = self.base_dir / "runners"
+        # Default storage directories in user home (~/.local/share/thatch)
+        self.default_prefixes_dir = self.user_data_dir / "prefixes"
+        self.default_runners_dir = self.user_data_dir / "runners"
         self.default_winetricks_cache_dir = Path.home() / ".cache" / "winetricks"
 
         self.default_prefixes_dir.mkdir(parents=True, exist_ok=True)
         self.default_runners_dir.mkdir(parents=True, exist_ok=True)
+
+        # Automatically migrate legacy workspace prefixes if present
+        legacy_prefixes = self.base_dir / "prefixes"
+        if legacy_prefixes.exists() and legacy_prefixes != self.default_prefixes_dir:
+            for p in legacy_prefixes.iterdir():
+                if p.is_dir() and not (self.default_prefixes_dir / p.name).exists():
+                    try:
+                        shutil.move(str(p), str(self.default_prefixes_dir / p.name))
+                    except Exception as e:
+                        print(f"[DB] Migration warning for legacy prefix {p.name}: {e}")
 
         self._games_cache = None
         self._config_cache = None
@@ -355,6 +386,42 @@ class ThatchDB:
                 and entry.name != "temp_zeus_prefix"
             ]
         )
+
+    def rename_prefix(self, old_name: str, new_name: str) -> bool:
+        """Renames an existing chest WINEPREFIX folder and updates all referencing game records."""
+        if not old_name or not new_name or old_name == new_name:
+            return False
+
+        clean_new = new_name.strip().replace(" ", "_")
+        p_dir = self.get_prefixes_dir()
+        old_path = p_dir / old_name
+        new_path = p_dir / clean_new
+
+        if not old_path.exists() or new_path.exists():
+            return False
+
+        try:
+            old_path.rename(new_path)
+        except Exception as e:
+            print(
+                f"[DB] Error renaming prefix folder from '{old_name}' to '{clean_new}': {e}"
+            )
+            return False
+
+        conn = sqlite3.connect(self.sqlite_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE games SET prefix = ? WHERE prefix = ?", (clean_new, old_name)
+        )
+        conn.commit()
+        conn.close()
+
+        if self._games_cache:
+            for ginfo in self._games_cache.values():
+                if ginfo.get("prefix") == old_name:
+                    ginfo["prefix"] = clean_new
+
+        return True
 
     # ─── Games Library Actions ───────────────────────────────────────────────
 

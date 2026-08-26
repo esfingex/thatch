@@ -146,6 +146,7 @@ class ThatchLauncher(QMainWindow):
         self.chest_details_view.run_requested.connect(self._on_chest_run)
         self.chest_details_view.browse_requested.connect(self._on_chest_browse)
         self.chest_details_view.terminal_requested.connect(self._on_chest_terminal)
+        self.chest_details_view.rename_requested.connect(self._on_chest_rename)
         self.chest_details_view.delete_requested.connect(self._on_chest_delete)
         self.chest_details_view.add_program_requested.connect(
             self._on_chest_add_program
@@ -633,6 +634,36 @@ class ThatchLauncher(QMainWindow):
             QMessageBox.critical(
                 self, "Error Terminal", f"Fallo al abrir terminal '{default_term}': {e}"
             )
+
+    @Slot(str)
+    def _on_chest_rename(self, prefix_name: str) -> None:
+        from PySide6.QtWidgets import QInputDialog, QLineEdit
+
+        new_name, ok = QInputDialog.getText(
+            self,
+            "Renombrar Cofre",
+            f"Introduce el nuevo nombre para el cofre '{prefix_name}':",
+            QLineEdit.Normal,
+            prefix_name,
+        )
+        if ok and new_name.strip():
+            clean_new = new_name.strip().replace(" ", "_")
+            if clean_new == prefix_name:
+                return
+
+            if self.db.rename_prefix(prefix_name, clean_new):
+                self.refresh_data()
+                self.update_system_context_menu()
+                self._on_chest_selected(clean_new)
+                self.toast.show_message(
+                    f"¡Cofre renombrado exitosamente a '{clean_new}'!"
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Error de Renombrado",
+                    f"No se pudo renombrar el cofre a '{clean_new}'. Verifica que el nombre no exista ya.",
+                )
 
     @Slot(str)
     def _on_chest_delete(self, prefix_name: str) -> None:
