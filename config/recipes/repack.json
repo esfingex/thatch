@@ -1,0 +1,17 @@
+{
+  "display_name": "Instaladores Repack / InnoSetup (Compresión Extrema)",
+  "required_verbs": [
+    "vcrun2022",
+    "vcrun2013",
+    "d3dcompiler_47"
+  ],
+  "recommended_runner": "wine-cachyos",
+  "performance_env": {
+    "WINEESYNC": "0",
+    "WINEMFSYNC": "0",
+    "WINEFSYNC": "0",
+    "WINE_LARGE_ADDRESS_AWARE": "0",
+    "WINEDLLOVERRIDES": "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+  },
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) sin congelamientos."
+}
