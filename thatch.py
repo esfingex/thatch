@@ -26,6 +26,5 @@ if __name__ == "__main__":
         app.setWindowIcon(QIcon(str(icon_path)))
     apply_theme(app)
     gui = ThatchLauncher()
-    if not gui.is_installer_mode:
-        gui.show()
+    gui.show()
     sys.exit(app.exec())
