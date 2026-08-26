@@ -169,12 +169,15 @@ class ZeusInstallerDialog(QDialog):
 
         if self.opt_repack.isChecked():
             env["WINEDLLOVERRIDES"] = (
-                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b;cls-lolz=n,b;cls-srep=n,b"
             )
-            env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
-            env["WINE_LARGE_ADDRESS_AWARE"] = "1"
+            env["WINEESYNC"] = "0"
+            env["WINEFSYNC"] = "0"
+            env["WINEMFSYNC"] = "0"
+            env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
+            env["WINE_LARGE_ADDRESS_AWARE"] = "0"
             self.console.append(
-                ":: [ZEUS-ENGINE] Optimización de descompresión y direccionamiento de memoria ACTIVADA."
+                ":: [ZEUS-ENGINE] Optimización de descompresión (LAA=0, Sync=0, DLL Overrides) ACTIVADA."
             )
         else:
             self.console.append(
