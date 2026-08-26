@@ -570,9 +570,10 @@ class ThatchLauncher(QMainWindow):
             registry_programs=registry_programs,
             catalog=self.load_winetricks_catalog(),
         )
-        self.sidebar.btn_chest_details.setText(
-            f"📦  {prefix_name.replace('_', ' ').title()}"
-        )
+        if hasattr(self.sidebar, "btn_chest_details"):
+            self.sidebar.btn_chest_details.setText(
+                f"📦  {prefix_name.replace('_', ' ').title()}"
+            )
         self._on_sidebar_view_changed("chest_details")
 
     # ─── CHEST DETAILS ACTIONS ─────────────────────────────────────────────────
@@ -1240,9 +1241,10 @@ class ThatchLauncher(QMainWindow):
                 actions[1].setText("Exit" if ACTIVE_LANG == "en" else "Salir")
 
         if self.chest_details_view.prefix_name:
-            self.sidebar.btn_chest_details.setText(
-                f"📦  {self.chest_details_view.prefix_name.replace('_', ' ').title()}"
-            )
+            if hasattr(self.sidebar, "btn_chest_details"):
+                self.sidebar.btn_chest_details.setText(
+                    f"📦  {self.chest_details_view.prefix_name.replace('_', ' ').title()}"
+                )
             self._on_chest_selected(self.chest_details_view.prefix_name)
 
     @Slot(str)
