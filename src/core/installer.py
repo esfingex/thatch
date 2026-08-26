@@ -137,7 +137,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
     # Auto-inject installer helper DLLs (unarc, isdone, cls-*, atl*) directly into system32 / syswow64
     if setup_dir.exists():
-        for dll_file in setup_dir.glob("*.dll"):
+        for dll_file in setup_dir.rglob("*.dll"):
             try:
                 shutil.copy2(dll_file, system32 / dll_file.name)
                 if syswow64.exists():
@@ -191,12 +191,11 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["WINE_LARGE_ADDRESS_AWARE"] = "1"
     env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
 
-    if "WINEDLLOVERRIDES" in env:
-        env["WINEDLLOVERRIDES"] = (
-            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
-        )
+    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+    if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
+        env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
     else:
-        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
+        env["WINEDLLOVERRIDES"] = dll_overrides
 
     try:
         parent_launcher._pre_install_program_ids = {

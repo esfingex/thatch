@@ -13,7 +13,8 @@ def update_system_context_menu(chests: list[str]) -> bool:
     """
     try:
         root_dir = Path(__file__).parent.parent.resolve()
-        python_exe = sys.executable
+        venv_python = root_dir / "venv" / "bin" / "python3"
+        python_exe = str(venv_python) if venv_python.exists() else sys.executable
         thatch_entry = root_dir / "thatch.py"
         icon_file = root_dir / "src" / "assets" / "icon.png"
 
