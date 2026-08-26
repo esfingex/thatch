@@ -169,10 +169,10 @@ class RunnerDownloadWorker(QThread):
     error = Signal(str)
 
     def __init__(
-        self, name: str, dest_dir: Path, custom_url: str | None = None
+        self, runner_id: str, dest_dir: Path, custom_url: str | None = None
     ) -> None:
         super().__init__()
-        self.name = name
+        self.runner_id = runner_id
         self.dest_dir = dest_dir
         self.custom_url = custom_url
 
@@ -183,10 +183,12 @@ class RunnerDownloadWorker(QThread):
                 download_url = self.custom_url
                 self.status.emit("Preparando descarga de GE-Proton...")
             else:
-                self.status.emit(f"Consultando manifiesto del runner {self.name}...")
+                self.status.emit(
+                    f"Consultando manifiesto del runner {self.runner_id}..."
+                )
 
                 # Fetch the manifest YAML
-                manifest_url = f"https://raw.githubusercontent.com/bottlesdevs/components/main/runners/wine/{self.name}.yml"
+                manifest_url = f"https://raw.githubusercontent.com/bottlesdevs/components/main/runners/wine/{self.runner_id}.yml"
                 req = urllib.request.Request(
                     manifest_url,
                     headers={
@@ -210,13 +212,16 @@ class RunnerDownloadWorker(QThread):
 
                 # Fallbacks in case manifest parsing is blocked
                 if not download_url:
-                    if "soda" in self.name.lower() or "caffe" in self.name.lower():
-                        download_url = f"https://github.com/bottlesdevs/wine/releases/download/{self.name}/{self.name}-x86_64.tar.xz"
-                    elif (
-                        "wine-ge" in self.name.lower()
-                        or "ge-proton" in self.name.lower()
+                    if (
+                        "soda" in self.runner_id.lower()
+                        or "caffe" in self.runner_id.lower()
                     ):
-                        tag_name = self.name.replace(
+                        download_url = f"https://github.com/bottlesdevs/wine/releases/download/{self.runner_id}/{self.runner_id}-x86_64.tar.xz"
+                    elif (
+                        "wine-ge" in self.runner_id.lower()
+                        or "ge-proton" in self.runner_id.lower()
+                    ):
+                        tag_name = self.runner_id.replace(
                             "wine-ge-proton", "GE-Proton"
                         ).replace("wine-ge-", "GE-Proton")
                         download_url = f"https://github.com/GloriousEggroll/wine-ge-custom/releases/download/{tag_name}/wine-lutris-{tag_name}-x86_64.tar.xz"
@@ -226,11 +231,11 @@ class RunnerDownloadWorker(QThread):
                     "No se pudo resolver la URL de descarga para este runner."
                 )
 
-            self.status.emit(f"Conectando para descargar {self.name}...")
+            self.status.emit(f"Conectando para descargar {self.runner_id}...")
             self.dest_dir.mkdir(parents=True, exist_ok=True)
 
             # Temporary file path
-            temp_archive = self.dest_dir / f"temp_{self.name}.tar"
+            temp_archive = self.dest_dir / f"temp_{self.runner_id}.tar"
             if temp_archive.exists():
                 temp_archive.unlink()
 
@@ -257,7 +262,7 @@ class RunnerDownloadWorker(QThread):
                         if total_size > 0:
                             pct = int((bytes_downloaded / total_size) * 90)
                             self.progress.emit(pct)
-                            self.status.emit(f"Downloading {self.name}: {pct}%")
+                            self.status.emit(f"Downloading {self.runner_id}: {pct}%")
 
             self.status.emit("Extracting Wine runner...")
             self.progress.emit(93)
@@ -510,7 +515,7 @@ class WineRunnersView(QWidget):
 
         # Create asynchronous worker thread
         self.download_worker = RunnerDownloadWorker(
-            runner_data["name"],
+            runner_data["id"],
             self.db.get_runners_dir(),
             custom_url=runner_data.get("custom_download_url"),
         )
