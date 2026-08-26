@@ -187,11 +187,18 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     else:
         args = [str(setup_file), "/DIR=C:\\Games"]
 
+    # Force disable Esync and Fsync during setup execution to prevent cls-lolz thread deadlocks
+    env["WINEESYNC"] = "0"
+    env["WINEFSYNC"] = "0"
+    env["WINEMFSYNC"] = "0"
+
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
     env["WINE_LARGE_ADDRESS_AWARE"] = "1"
     env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
 
-    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+    dll_overrides = (
+        "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b;cls-lolz=n,b;cls-srep=n,b"
+    )
     if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
         env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
     else:
