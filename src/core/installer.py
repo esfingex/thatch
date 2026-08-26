@@ -267,11 +267,18 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         parent_launcher.installer_process.finished.connect(on_installer_finished)
         parent_launcher.installer_process.start(wine_cmd, args)
 
-        # Boost CPU and Disk I/O priority for decompression installer processes
+        # Boost CPU and Disk I/O priority and fix missing decompressor aliases
+        pref_path = parent_launcher.db.get_prefixes_dir() / prefix_name
         QTimer.singleShot(
-            500,
+            1000,
             lambda: _boost_process_priority(
-                parent_launcher.installer_process.processId()
+                parent_launcher.installer_process.processId(), pref_path
+            ),
+        )
+        QTimer.singleShot(
+            3000,
+            lambda: _boost_process_priority(
+                parent_launcher.installer_process.processId(), pref_path
             ),
         )
     except Exception as e:
@@ -280,9 +287,29 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         )
 
 
-def _boost_process_priority(pid: int) -> None:
-    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and its children."""
+def _boost_process_priority(pid: int, prefix_dir: Path | None = None) -> None:
+    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and fixes missing aliases."""
     import subprocess
+
+    # Alias missing decompressor executables in temp directories if extracted
+    if prefix_dir and prefix_dir.exists():
+        temp_base = prefix_dir / "drive_c" / "users"
+        if temp_base.exists():
+            for tmp_folder in temp_base.rglob("is-*.tmp"):
+                if tmp_folder.is_dir():
+                    magic_x64 = tmp_folder / "cls-magic2l_x64.exe"
+                    if magic_x64.exists():
+                        for alias in [
+                            "cls-lolzx_x64.exe",
+                            "cls-lolz_x64.exe",
+                            "cls-lolz.exe",
+                        ]:
+                            target = tmp_folder / alias
+                            if not target.exists():
+                                try:
+                                    shutil.copy2(magic_x64, target)
+                                except Exception:
+                                    pass
 
     target_pids = set()
     if pid > 0:
