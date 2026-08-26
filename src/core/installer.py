@@ -120,7 +120,20 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     else:
         env.pop("WINEARCH", None)
 
-    dosdevices_dir = parent_launcher.db.get_prefixes_dir() / prefix_name / "dosdevices"
+    # Ensure writeable drive_c directories (Games, Temp, AppData) exist in prefix
+    prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name
+    drive_c = prefix_path / "drive_c"
+    (drive_c / "Games").mkdir(parents=True, exist_ok=True)
+    (drive_c / "windows" / "temp").mkdir(parents=True, exist_ok=True)
+    (drive_c / "users" / "steamuser" / "Temp").mkdir(parents=True, exist_ok=True)
+    (drive_c / "users" / "steamuser" / "AppData" / "Local" / "Temp").mkdir(
+        parents=True, exist_ok=True
+    )
+
+    env["TEMP"] = "C:\\windows\\temp"
+    env["TMP"] = "C:\\windows\\temp"
+
+    dosdevices_dir = prefix_path / "dosdevices"
     dosdevices_dir.mkdir(parents=True, exist_ok=True)
     z_drive = dosdevices_dir / "z:"
     if not z_drive.exists() and not z_drive.is_symlink():
@@ -162,10 +175,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
     if "WINEDLLOVERRIDES" in env:
         env["WINEDLLOVERRIDES"] = (
-            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
+            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n;unarc=n,b;isdone=n,b"
         )
     else:
-        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
+        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n;unarc=n,b;isdone=n,b"
 
     try:
         parent_launcher._pre_install_program_ids = {
