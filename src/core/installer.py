@@ -248,10 +248,39 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
         parent_launcher.installer_process.finished.connect(on_installer_finished)
         parent_launcher.installer_process.start(wine_cmd, args)
+
+        # Boost CPU and Disk I/O priority for decompression installer processes
+        QTimer.singleShot(
+            500,
+            lambda: _boost_process_priority(
+                parent_launcher.installer_process.processId()
+            ),
+        )
     except Exception as e:
         QMessageBox.critical(
             parent_launcher, "Error", f"Fallo al iniciar el instalador: {e}"
         )
+
+
+def _boost_process_priority(pid: int) -> None:
+    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes."""
+    if pid <= 0:
+        return
+    import subprocess
+
+    try:
+        subprocess.run(
+            ["renice", "-n", "-10", "-p", str(pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        subprocess.run(
+            ["ionice", "-c", "1", "-n", "0", "-p", str(pid)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
 
 
 def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
