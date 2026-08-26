@@ -1,6 +1,7 @@
 {
   "display_name": "Juego Genérico (Estándar)",
   "required_verbs": [
+    "win10",
     "vcrun2022",
     "vcrun2013",
     "d3dcompiler_47"

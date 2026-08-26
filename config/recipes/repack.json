@@ -1,6 +1,7 @@
 {
   "display_name": "Instaladores Repack / InnoSetup (Compresión Extrema)",
   "required_verbs": [
+    "win10",
     "vcrun2022",
     "vcrun2013",
     "d3dcompiler_47"
@@ -8,7 +9,8 @@
   "recommended_runner": "wine-cachyos",
   "performance_env": {
     "WINEESYNC": "0",
-    "WINEMFSYNC": "0"
+    "WINEMFSYNC": "0",
+    "WINEFSYNC": "0"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) sin congelamientos."
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) en perfil Windows 10 de 64 bits."
 }

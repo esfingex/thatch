@@ -1,6 +1,7 @@
 {
   "display_name": "Grim Dawn (GOG)",
   "required_verbs": [
+    "win10",
     "vcrun2022",
     "d3dx9",
     "d3dx10",
