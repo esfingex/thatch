@@ -685,11 +685,16 @@ class ThatchLauncher(QMainWindow):
                 self.remove_launcher(prefix_name, gname)
                 self.db.remove_game(gname)
 
-            prefix_path = self.db.get_prefixes_dir() / prefix_name
-            if prefix_path.exists():
-                import shutil
+            import shutil
 
-                shutil.rmtree(prefix_path, ignore_errors=True)
+            for p_dir in [
+                self.db.get_prefixes_dir(),
+                self.db.base_dir / "prefixes",
+                Path.home() / ".local" / "share" / "thatch" / "prefixes",
+            ]:
+                target = p_dir / prefix_name
+                if target.exists():
+                    shutil.rmtree(target, ignore_errors=True)
 
             self.refresh_data()
             self._on_sidebar_view_changed("chests")

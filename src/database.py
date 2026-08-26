@@ -55,13 +55,20 @@ class ThatchDB:
         ]:
             if old_dir.exists() and old_dir != self.default_prefixes_dir:
                 for p in old_dir.iterdir():
-                    if p.is_dir() and not (self.default_prefixes_dir / p.name).exists():
-                        try:
-                            shutil.copytree(
-                                str(p), str(self.default_prefixes_dir / p.name)
-                            )
-                        except Exception as e:
-                            print(f"[DB] Migration warning for prefix {p.name}: {e}")
+                    if p.is_dir():
+                        target = self.default_prefixes_dir / p.name
+                        if not target.exists():
+                            try:
+                                shutil.move(str(p), str(target))
+                            except Exception as e:
+                                print(
+                                    f"[DB] Migration warning for prefix {p.name}: {e}"
+                                )
+                        else:
+                            try:
+                                shutil.rmtree(str(p), ignore_errors=True)
+                            except Exception:
+                                pass
 
         self._games_cache = None
         self._config_cache = None
@@ -384,18 +391,19 @@ class ThatchDB:
     # ─── Prefix Directories Lookup ───────────────────────────────────────────
 
     def list_existing_prefixes(self) -> list[str]:
-        """Lists folders inside get_prefixes_dir() and workspace/prefixes to enable prefix sharing."""
-        prefixes = set()
-        for p_dir in [self.get_prefixes_dir(), self.base_dir / "prefixes"]:
-            if p_dir.exists():
-                for entry in p_dir.iterdir():
-                    if (
-                        entry.is_dir()
-                        and not entry.name.startswith(".")
-                        and entry.name != "temp_zeus_prefix"
-                    ):
-                        prefixes.add(entry.name)
-        return sorted(list(prefixes))
+        """Lists folders inside get_prefixes_dir() to enable prefix sharing."""
+        p_dir = self.get_prefixes_dir()
+        if not p_dir.exists():
+            return []
+        return sorted(
+            [
+                entry.name
+                for entry in p_dir.iterdir()
+                if entry.is_dir()
+                and not entry.name.startswith(".")
+                and entry.name != "temp_zeus_prefix"
+            ]
+        )
 
     def rename_prefix(self, old_name: str, new_name: str) -> bool:
         """Renames an existing chest WINEPREFIX folder and updates all referencing game records."""
