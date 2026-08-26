@@ -182,9 +182,14 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
     args = []
     if vd_enabled:
-        args = ["explorer", f"/desktop=Thatch,{vd_res}", str(setup_file)]
+        args = [
+            "explorer",
+            f"/desktop=Thatch,{vd_res}",
+            str(setup_file),
+            "/DIR=C:\\Games",
+        ]
     else:
-        args = [str(setup_file)]
+        args = [str(setup_file), "/DIR=C:\\Games"]
 
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
     if "WINEDLLOVERRIDES" in env:
