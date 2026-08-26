@@ -293,25 +293,59 @@ def _boost_process_priority(pid: int, prefix_dir: Path | None = None) -> None:
     """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and fixes missing aliases."""
     import subprocess
 
-    # Alias missing decompressor executables in temp directories if extracted
+    # Replace 32-bit decompressors with 64-bit binaries to bypass 32-bit WoW64 assembly signal loops
     if prefix_dir and prefix_dir.exists():
         temp_base = prefix_dir / "drive_c" / "users"
         if temp_base.exists():
             for tmp_folder in temp_base.rglob("is-*.tmp"):
                 if tmp_folder.is_dir():
                     magic_x64 = tmp_folder / "cls-magic2l_x64.exe"
+                    srep_x64 = tmp_folder / "cls-srep_x64.exe"
+                    lolly_x64 = tmp_folder / "cls-lollypop_x64.exe"
+
                     if magic_x64.exists():
-                        for alias in [
+                        for target_name in [
+                            "cls-magic2_x86.exe",
+                            "cls-magic2.exe",
+                            "cls-magic2l_x86.exe",
                             "cls-lolzx_x64.exe",
                             "cls-lolz_x64.exe",
+                            "cls-lolz_x86.exe",
                             "cls-lolz.exe",
                         ]:
-                            target = tmp_folder / alias
-                            if not target.exists():
-                                try:
-                                    shutil.copy2(magic_x64, target)
-                                except Exception:
-                                    pass
+                            t = tmp_folder / target_name
+                            try:
+                                shutil.copy2(magic_x64, t)
+                            except Exception:
+                                pass
+
+                    if srep_x64.exists():
+                        for target_name in ["cls-srep_x86.exe", "cls-srep.exe"]:
+                            t = tmp_folder / target_name
+                            try:
+                                shutil.copy2(srep_x64, t)
+                            except Exception:
+                                pass
+
+                    if lolly_x64.exists():
+                        for target_name in ["cls-lollypop_x86.exe", "cls-lollypop.exe"]:
+                            t = tmp_folder / target_name
+                            try:
+                                shutil.copy2(lolly_x64, t)
+                            except Exception:
+                                pass
+
+                    arc_ini = tmp_folder / "arc.ini"
+                    if arc_ini.exists():
+                        try:
+                            txt = arc_ini.read_text(encoding="utf-8", errors="ignore")
+                            if "_x86.exe" in txt:
+                                arc_ini.write_text(
+                                    txt.replace("_x86.exe", "_x64.exe"),
+                                    encoding="utf-8",
+                                )
+                        except Exception:
+                            pass
 
     target_pids = set()
     if pid > 0:
