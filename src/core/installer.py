@@ -211,9 +211,16 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     # This prevents 32-bit pointer overflow in unarc.dll / cls-lolz.dll regardless of installer options!
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
     env["WINE_LARGE_ADDRESS_AWARE"] = "0"
-    env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
+    # Add temp directory to PATH for helper DLL resolution (cls-lolz, unarc)
+    user_temp = (
+        prefix_path / "drive_c" / "users" / "esfingex" / "AppData" / "Local" / "Temp"
+    )
+    win_temp = prefix_path / "drive_c" / "windows" / "temp"
+    env["PATH"] = (
+        f"{str(setup_dir)}:{str(user_temp)}:{str(win_temp)}:{env.get('PATH', '')}"
+    )
 
-    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b"
     if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
         env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
     else:
