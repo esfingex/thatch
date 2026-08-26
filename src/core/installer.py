@@ -121,6 +121,17 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     if installer_arch == "x64" or syswow64.exists():
         env["WINEARCH"] = "win64"
 
+    # Ensure Windows 10 mode in user.reg (prevent legacy winxp fallback locks)
+    user_reg = prefix_path / "user.reg"
+    if user_reg.exists():
+        try:
+            reg_txt = user_reg.read_text(encoding="utf-8", errors="ignore")
+            if '"Version"="winxp"' in reg_txt:
+                reg_txt = reg_txt.replace('"Version"="winxp"', '"Version"="win10"')
+                user_reg.write_text(reg_txt, encoding="utf-8")
+        except Exception:
+            pass
+
     # Ensure writeable drive_c directories (Games, Temp, AppData, system32, syswow64) exist in prefix
     (drive_c / "Games").mkdir(parents=True, exist_ok=True)
     (drive_c / "windows" / "temp").mkdir(parents=True, exist_ok=True)
