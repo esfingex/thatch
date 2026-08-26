@@ -8,10 +8,7 @@
   "recommended_runner": "wine-cachyos",
   "performance_env": {
     "WINEESYNC": "0",
-    "WINEMFSYNC": "0",
-    "WINEFSYNC": "0",
-    "WINE_LARGE_ADDRESS_AWARE": "0",
-    "WINEDLLOVERRIDES": "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+    "WINEMFSYNC": "0"
   },
   "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) sin congelamientos."
 }
