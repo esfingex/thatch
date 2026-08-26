@@ -337,7 +337,15 @@ class ThatchLauncher(QMainWindow):
     def _get_runners_list(self) -> list[str]:
         runners_dir = self.db.get_runners_dir()
         if runners_dir.exists():
-            return sorted([d.name for d in runners_dir.iterdir() if d.is_dir()])
+            return sorted(
+                [
+                    d.name
+                    for d in runners_dir.iterdir()
+                    if d.is_dir()
+                    and "aarch64" not in d.name.lower()
+                    and "arm64" not in d.name.lower()
+                ]
+            )
         return []
 
     def refresh_data(self) -> None:

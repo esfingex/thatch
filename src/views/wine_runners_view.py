@@ -60,8 +60,18 @@ class IndexLoaderWorker(QThread):
             for name, info in data.items():
                 category = info.get("Category", "").strip()
                 sub_category = info.get("Sub-category", "").strip()
+                arch = info.get("Arch", "").strip().lower()
+                name_lower = name.lower()
+
+                # Filter out ARM/aarch64 builds on x86_64 systems
+                if (
+                    "aarch64" in name_lower
+                    or "arm64" in name_lower
+                    or arch in ["aarch64", "arm64"]
+                ):
+                    continue
+
                 if category == "runners" and sub_category == "wine":
-                    name_lower = name.lower()
                     if "soda" in name_lower:
                         group_key = "Soda"
                     elif "caffe" in name_lower:
@@ -117,10 +127,13 @@ class IndexLoaderWorker(QThread):
                     if ge_tag:
                         ge_url = ""
                         for asset in ge_data.get("assets", []):
-                            asset_name = asset.get("name", "")
-                            if asset_name.endswith(
-                                ".tar.gz"
-                            ) and not asset_name.endswith(".sha512sum"):
+                            asset_name = asset.get("name", "").lower()
+                            if (
+                                asset_name.endswith(".tar.gz")
+                                and not asset_name.endswith(".sha512sum")
+                                and "aarch64" not in asset_name
+                                and "arm64" not in asset_name
+                            ):
                                 ge_url = asset.get("browser_download_url", "")
                                 break
                         if ge_url:
