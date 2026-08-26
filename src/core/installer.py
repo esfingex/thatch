@@ -207,9 +207,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["WINEFSYNC"] = "0"
     env["WINEMFSYNC"] = "0"
 
-    # Set Large Address Aware to 1 for 64-bit Wine memory allocation
-    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
-    env["WINE_LARGE_ADDRESS_AWARE"] = "1"
+    # Force disable Large Address Aware (LAA=0) during installer execution to cap memory allocations below 2GB
+    # This prevents 32-bit pointer overflow in unarc.dll / cls-lolz.dll regardless of installer options!
+    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
+    env["WINE_LARGE_ADDRESS_AWARE"] = "0"
     env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
 
     dll_overrides = "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"

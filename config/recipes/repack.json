@@ -10,7 +10,9 @@
   "performance_env": {
     "WINEESYNC": "0",
     "WINEMFSYNC": "0",
-    "WINEFSYNC": "0"
+    "WINEFSYNC": "0",
+    "WINE_LARGE_ADDRESS_AWARE": "0",
+    "PROTON_FORCE_LARGE_ADDRESS_AWARE": "0"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) en perfil Windows 10 de 64 bits."
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con límite estricto de 2GB de RAM para evitar desbordamiento de punteros 32-bit."
 }
