@@ -102,13 +102,18 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         if associated_game
         else "default_gaming"
     )
+    runner_override = associated_game.get("runner") if associated_game else None
+    ge_runner = parent_launcher.db.get_runners_dir() / "lutris-GE-Proton8-26-x86_64"
+    if not runner_override and ge_runner.exists():
+        runner_override = "lutris-GE-Proton8-26-x86_64"
+
     env, runner_path = get_wine_env(
         parent_launcher.db,
         parent_launcher.active_gpu,
         parent_launcher.recipes,
         prefix_name,
         recipe_id,
-        associated_game.get("runner") if associated_game else None,
+        runner_override,
     )
 
     prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name

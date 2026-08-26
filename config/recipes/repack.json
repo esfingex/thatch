@@ -6,7 +6,7 @@
     "vcrun2013",
     "d3dcompiler_47"
   ],
-  "recommended_runner": "wine-cachyos",
+  "recommended_runner": "lutris-GE-Proton8-26-x86_64",
   "performance_env": {
     "WINEESYNC": "0",
     "WINEMFSYNC": "0",
@@ -18,5 +18,5 @@
     "XTOOL_THREADS": "4",
     "SREP_THREADS": "4"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con simulación de páginas Copy-On-Write para evitar bucles de señales WoW64 en Linux."
+  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con simulación de páginas Copy-On-Write y runner GE-Proton."
 }
