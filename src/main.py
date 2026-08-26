@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QStackedWidget,
 )
-from PySide6.QtCore import QProcess, Qt, QProcessEnvironment, QTimer, Slot
+from PySide6.QtCore import QProcess, Qt, QProcessEnvironment, QTimer, Slot, Signal
 from PySide6.QtGui import QIcon, QAction
 
 # Import modular backend components
@@ -41,7 +41,9 @@ from views import (
     CreateChestWizard,
     ToastNotification,
     RecipesView,
+    InstallChestSelectorDialog,
 )
+from desktop_integration import update_system_context_menu
 from i18n import _, ACTIVE_LANG
 
 
@@ -89,6 +91,11 @@ class ThatchLauncher(QMainWindow):
     with database, hardware hooks, and Wine execution environments.
     """
 
+    # ── Background thread → Main thread safe signals ──────────────────────────
+    _catalog_ready = Signal(int)  # emitted with verb count when catalog is saved
+    _catalog_failed = Signal()  # emitted when winetricks query returns empty
+    _catalog_error = Signal(str)  # emitted when winetricks is not installed
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"🏴‍☠️ Thatch - {_('app_title')} v{__version__}")
@@ -104,19 +111,18 @@ class ThatchLauncher(QMainWindow):
         self.current_verb = ""
         self.console_dialog = None
         self.tray_icon = None
+        self.is_installer_mode = False
         self._winetricks_catalog: list[dict] | None = None  # lazy cache
+
+        # Connect background catalog signals to safe main-thread slots
+        self._catalog_ready.connect(self._on_catalog_ready)
+        self._catalog_failed.connect(self._on_catalog_failed)
+        self._catalog_error.connect(self._on_catalog_error)
 
         self.init_tray()
         self.init_ui()
         self.refresh_data()
-
-        # Double click bootstrap handler
-        if len(sys.argv) > 1:
-            arg_path = Path(sys.argv[1])
-            if arg_path.exists() and arg_path.suffix.lower() == ".exe":
-                QTimer.singleShot(
-                    150, lambda: self._on_zeus_requested_prefilled(str(arg_path))
-                )
+        self.handle_cli_args()
 
     def init_tray(self) -> None:
         if QSystemTrayIcon.isSystemTrayAvailable():
@@ -191,6 +197,9 @@ class ThatchLauncher(QMainWindow):
         self.chest_details_view.remove_program_requested.connect(
             self._on_chest_remove_program
         )
+        self.chest_details_view.remove_link_requested.connect(
+            self._on_chest_remove_link
+        )
         self.chest_details_view.run_installer_requested.connect(
             self._on_chest_run_installer
         )
@@ -228,6 +237,12 @@ class ThatchLauncher(QMainWindow):
         self.preferences_view.update_catalog_requested.connect(
             self._on_update_catalog_requested
         )
+        self.preferences_view.cleanup_orphans_requested.connect(
+            self._on_manual_cleanup_orphans
+        )
+        self.preferences_view.register_context_menu_requested.connect(
+            self.register_context_menu
+        )
         self.preferences_view.combo_language.currentIndexChanged.connect(
             self.on_language_changed
         )
@@ -248,6 +263,9 @@ class ThatchLauncher(QMainWindow):
 
         # 3. Toast Notifications Overlay
         self.toast = ToastNotification(self)
+
+        # 4. Clean up leftover orphaned desktop shortcuts on startup
+        self.cleanup_orphaned_launchers()
 
     def load_winetricks_catalog(self) -> list[dict]:
         """
@@ -374,7 +392,8 @@ class ThatchLauncher(QMainWindow):
 
             if not shutil.which("winetricks"):
                 if not silent:
-                    self.toast.show_message(
+                    # ✅ Safe: emit signal → handled in main thread
+                    self._catalog_error.emit(
                         "Error: 'winetricks' is not installed."
                         if ACTIVE_LANG == "en"
                         else "Error: 'winetricks' no está instalado en el sistema."
@@ -432,19 +451,36 @@ class ThatchLauncher(QMainWindow):
                         f"[WinetricksCatalog BG] Successfully cached {len(full_catalog)} verbs to SQLite."
                     )
                     if not silent:
-                        self.toast.show_message(
-                            _("toast_catalog_updated", count=len(full_catalog))
-                        )
-                        self.refresh_data()
+                        # ✅ Safe: emit signal → handled in main thread
+                        self._catalog_ready.emit(len(full_catalog))
                 except Exception as e:
                     print(
                         f"[WinetricksCatalog BG] Failed to cache catalog to SQLite: {e}"
                     )
             else:
                 if not silent:
-                    self.toast.show_message(_("toast_catalog_failed"))
+                    # ✅ Safe: emit signal → handled in main thread
+                    self._catalog_failed.emit()
 
         threading.Thread(target=bg_loader, daemon=True).start()
+
+    # ── Background catalog signal handlers (always run in main thread) ────────
+
+    @Slot(int)
+    def _on_catalog_ready(self, count: int) -> None:
+        """Called in main thread when winetricks catalog is successfully saved."""
+        self.toast.show_message(_("toast_catalog_updated", count=count))
+        self.refresh_data()
+
+    @Slot()
+    def _on_catalog_failed(self) -> None:
+        """Called in main thread when winetricks catalog query returns empty."""
+        self.toast.show_message(_("toast_catalog_failed"))
+
+    @Slot(str)
+    def _on_catalog_error(self, message: str) -> None:
+        """Called in main thread when winetricks is not found or an install error occurs."""
+        self.toast.show_message(message)
 
     @Slot()
     def _on_update_catalog_requested(self) -> None:
@@ -493,6 +529,12 @@ class ThatchLauncher(QMainWindow):
         self.cargo_view.populate_maps(prefixes, self.recipes)
         self.preferences_view.update_runners_list(runners)
         self.wine_runners_view.update_runners_list(runners)
+
+        # Auto-update system context menu actions (e.g. Dolphin ServiceMenu with available chests)
+        try:
+            update_system_context_menu(prefixes)
+        except Exception as e:
+            print(f"Failed to auto-update system context menu: {e}")
 
         # If detail view is open on a prefix, refresh it
         if self.chest_details_view.prefix_name:
@@ -759,11 +801,7 @@ class ThatchLauncher(QMainWindow):
         else:
             bin_dir = None
 
-        is_x64 = (
-            self._get_pe_arch(exe_path) == "x64"
-            if exe_path
-            else False
-        )
+        is_x64 = self._get_pe_arch(exe_path) == "x64" if exe_path else False
 
         wine_bin = "wine64" if is_x64 else "wine"
 
@@ -1099,6 +1137,7 @@ class ThatchLauncher(QMainWindow):
                     self.db.remove_game(gname)
 
             shutil.rmtree(prefix_path, ignore_errors=True)
+            self.cleanup_orphaned_launchers()
             self._on_sidebar_view_changed("chests")
             self.toast.show_message(
                 f"Chest '{prefix_name}' y todos sus lanzadores eliminados."
@@ -1355,8 +1394,68 @@ class ThatchLauncher(QMainWindow):
                         f"[Desktop Shortcut Error] Failed to write to {desk_p.name}: {desk_err}"
                     )
 
+            # 3. Force Linux desktop panel refresh
+            self.refresh_desktop_database()
+
         except Exception as e:
             print(f"[Launcher Error] Failed to generate launchers: {e}")
+
+    def refresh_desktop_database(self) -> None:
+        """Notifies Linux desktop environment to refresh application panel menus."""
+        apps_dir = Path.home() / ".local" / "share" / "applications"
+        if apps_dir.exists():
+            try:
+                # Touch directory to trigger inotify events in desktop shell
+                apps_dir.touch()
+            except Exception:
+                pass
+        if shutil.which("update-desktop-database"):
+            try:
+                subprocess.run(
+                    ["update-desktop-database", str(apps_dir)],
+                    capture_output=True,
+                    timeout=3,
+                )
+            except Exception:
+                pass
+
+    def cleanup_orphaned_launchers(self) -> int:
+        """Scans ~/.local/share/applications/ for thatch-*.desktop shortcuts whose target games/prefixes no longer exist."""
+        apps_dir = Path.home() / ".local" / "share" / "applications"
+        if not apps_dir.exists():
+            return 0
+
+        existing_games = self.db.list_games()
+        valid_desktop_files = set()
+        for gname, ginfo in existing_games.items():
+            pname = ginfo.get("prefix", "")
+            cname = gname.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
+            valid_desktop_files.add(f"thatch-{pname}-{cname}.desktop")
+
+        removed_count = 0
+        for dt_file in apps_dir.glob("thatch-*.desktop"):
+            if dt_file.name not in valid_desktop_files:
+                try:
+                    dt_file.unlink()
+                    removed_count += 1
+                except Exception as e:
+                    print(f"[Orphan Cleanup] Failed to remove {dt_file.name}: {e}")
+
+        for desk_p in self._get_desktop_paths():
+            for dt_file in desk_p.glob("thatch-*.desktop"):
+                if dt_file.name not in valid_desktop_files:
+                    try:
+                        dt_file.unlink()
+                        removed_count += 1
+                    except Exception as e:
+                        print(
+                            f"[Orphan Cleanup] Failed to remove desktop shortcut {dt_file.name}: {e}"
+                        )
+
+        if removed_count > 0:
+            self.refresh_desktop_database()
+
+        return removed_count
 
     def _extract_exe_icon(
         self, prefix_name: str, exe_path: Path, game_name: str
@@ -1422,29 +1521,27 @@ class ThatchLauncher(QMainWindow):
             game_name.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
         )
 
-        # 1. Delete menu shortcut
-        desktop_path = (
-            Path.home()
-            / ".local"
-            / "share"
-            / "applications"
-            / f"thatch-{prefix_name}-{clean_name}.desktop"
-        )
-        if desktop_path.exists():
-            try:
-                desktop_path.unlink()
-            except Exception as e:
-                print(f"[Launcher Cleanup] Failed to remove desktop file: {e}")
+        # 1. Delete menu shortcut(s) matching prefix & game name pattern
+        desktop_dir = Path.home() / ".local" / "share" / "applications"
+        if desktop_dir.exists():
+            target_pattern = f"thatch-{prefix_name}-{clean_name}*.desktop"
+            for dt_file in desktop_dir.glob(target_pattern):
+                try:
+                    dt_file.unlink()
+                except Exception as e:
+                    print(
+                        f"[Launcher Cleanup] Failed to remove desktop file {dt_file.name}: {e}"
+                    )
 
         # 2. Delete all Desktop shortcuts
         for desk_p in self._get_desktop_paths():
-            target_desk_shortcut = desk_p / f"thatch-{prefix_name}-{clean_name}.desktop"
-            if target_desk_shortcut.exists():
+            target_pattern = f"thatch-{prefix_name}-{clean_name}*.desktop"
+            for dt_file in desk_p.glob(target_pattern):
                 try:
-                    target_desk_shortcut.unlink()
+                    dt_file.unlink()
                 except Exception as e:
                     print(
-                        f"[Launcher Cleanup] Failed to remove Desktop shortcut from {desk_p.name}: {e}"
+                        f"[Launcher Cleanup] Failed to remove Desktop shortcut {dt_file.name} from {desk_p.name}: {e}"
                     )
 
         # 3. Delete sh launcher
@@ -1456,10 +1553,31 @@ class ThatchLauncher(QMainWindow):
             except Exception as e:
                 print(f"[Launcher Cleanup] Failed to remove sh file: {e}")
 
+        # 4. Force Linux desktop panel refresh
+        self.refresh_desktop_database()
+
+    @Slot(str, str)
+    def _on_chest_remove_link(self, prefix_name: str, game_name: str) -> None:
+        """Removes the launcher script (.sh), desktop shortcut (.desktop), and unbinds from Thatch DB."""
+        confirm = QMessageBox.question(
+            self,
+            "Eliminar Link",
+            f"¿Seguro que deseas eliminar el acceso directo / link de '{game_name}'?\n"
+            "Esto eliminará los accesos directos del menú de Linux (Panel) y de Thatch, "
+            "pero no borrará los archivos del juego ni el contenedor.",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if confirm == QMessageBox.Yes:
+            self.remove_launcher(prefix_name, game_name)
+            self.db.remove_game(game_name)
+            self.refresh_data()
+            self.toast.show_message(
+                f"¡Link de '{game_name}' y accesos directos eliminados del panel!"
+            )
+
     @Slot(str, str)
     def _on_chest_remove_program(self, prefix_name: str, game_name: str) -> None:
-        """Runs the Windows uninstaller for the program, then cleans up Thatch launchers."""
-        # Look up uninstall string from Wine registry
+        """Runs the Windows uninstaller for the program, or removes the link/shortcuts."""
         registry_programs = self.get_wine_installed_programs(prefix_name)
         reg_entry = next(
             (r for r in registry_programs if r["name"].lower() == game_name.lower()),
@@ -1467,17 +1585,35 @@ class ThatchLauncher(QMainWindow):
         )
         uninstall_str = reg_entry.get("uninstall_string", "") if reg_entry else ""
 
-        if uninstall_str:
-            confirm = QMessageBox.question(
-                self,
-                "Desinstalar Programa",
-                f"¿Deseas desinstalar '{game_name}'?\n"
-                "Se ejecutará el desinstalador de Windows y se eliminarán los accesos directos.",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            if confirm != QMessageBox.Yes:
-                return
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Desinstalar / Eliminar Link")
+        msg_box.setText(f"¿Qué deseas hacer con el programa '{game_name}'?")
 
+        btn_uninstall = None
+        if uninstall_str:
+            btn_uninstall = msg_box.addButton(
+                "Ejecutar Desinstalador de Windows", QMessageBox.AcceptRole
+            )
+
+        btn_unlink = msg_box.addButton(
+            "Solo Eliminar Link / Acceso Directo", QMessageBox.ActionRole
+        )
+        btn_cancel = msg_box.addButton("Cancelar", QMessageBox.RejectRole)
+
+        msg_box.exec()
+        clicked = msg_box.clickedButton()
+
+        if clicked == btn_cancel:
+            return
+        elif clicked == btn_unlink:
+            self.remove_launcher(prefix_name, game_name)
+            self.db.remove_game(game_name)
+            self.refresh_data()
+            self.toast.show_message(
+                f"¡Link de '{game_name}' y accesos directos eliminados del panel!"
+            )
+            return
+        elif clicked == btn_uninstall and uninstall_str:
             # Run the Windows uninstaller via Wine
             game_info = self.db.get_game(game_name)
             recipe_id = (
@@ -1491,11 +1627,9 @@ class ThatchLauncher(QMainWindow):
 
             wine_cmd = self._get_wine_cmd(runner_path)
 
-            # The uninstall string may contain quotes and arguments
             import shlex
 
             try:
-                # Parse it as a command line with possible arguments
                 parts = shlex.split(uninstall_str.replace("\\", "/"))
                 uninstaller_exe = parts[0] if parts else uninstall_str
                 extra_args = parts[1:] if len(parts) > 1 else []
@@ -1504,25 +1638,105 @@ class ThatchLauncher(QMainWindow):
                 self.toast.show_message(f"Ejecutando desinstalador de '{game_name}'...")
             except Exception as e:
                 self.toast.show_message(f"Error al ejecutar desinstalador: {e}")
-        else:
-            # No registry entry — just unlink from Thatch
-            confirm = QMessageBox.question(
-                self,
-                "Desvincular Programa",
-                f"¿Deseas desvincular '{game_name}' de la biblioteca?\n"
-                "No se encontró desinstalador de Windows. Solo se eliminarán los accesos directos.",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            if confirm != QMessageBox.Yes:
-                return
 
-        # In both cases: remove from Thatch DB and clean up launchers
-        self.remove_launcher(prefix_name, game_name)
-        self.db.remove_game(game_name)
-        self.refresh_data()
-        self.toast.show_message(
-            f"¡Programa '{game_name}' desinstalado y lanzadores eliminados!"
-        )
+            # Remove from Thatch DB and clean up launchers
+            self.remove_launcher(prefix_name, game_name)
+            self.db.remove_game(game_name)
+            self.refresh_data()
+            self.toast.show_message(
+                f"¡Programa '{game_name}' desinstalado y lanzadores eliminados!"
+            )
+
+    @Slot()
+    def _on_manual_cleanup_orphans(self) -> None:
+        """Manually triggers scan to delete orphaned panel shortcuts."""
+        count = self.cleanup_orphaned_launchers()
+        if count > 0:
+            self.toast.show_message(
+                f"¡Se limpiaron {count} accesos directos huérfanos del panel!"
+            )
+        else:
+            self.toast.show_message("No se encontraron accesos directos huérfanos.")
+
+    @Slot()
+    def register_context_menu(self) -> None:
+        """Manually registers/updates system right-click context menu integration."""
+        chests = self.db.list_existing_prefixes()
+        success = update_system_context_menu(chests)
+        if success:
+            self.toast.show_message(_("toast_context_menu_registered"))
+        else:
+            self.toast.show_message("Error al registrar menú contextual.")
+
+    def handle_cli_args(self) -> None:
+        """Parses command-line arguments (--install / --chest / file path) on application launch."""
+        args = sys.argv[1:]
+        if not args:
+            return
+
+        install_path: str | None = None
+        target_chest: str | None = None
+
+        i = 0
+        while i < len(args):
+            arg = args[i]
+            if arg == "--install" and i + 1 < len(args):
+                install_path = args[i + 1]
+                i += 2
+            elif arg == "--chest" and i + 1 < len(args):
+                target_chest = args[i + 1]
+                i += 2
+            else:
+                p = Path(arg)
+                if p.exists() and p.suffix.lower() in (
+                    ".exe",
+                    ".msi",
+                    ".bat",
+                    ".cmd",
+                ):
+                    install_path = str(p)
+                i += 1
+
+        if install_path and Path(install_path).exists():
+            self.is_installer_mode = True
+            QTimer.singleShot(
+                200, lambda: self.prompt_installer_launch(install_path, target_chest)
+            )
+
+    def prompt_installer_launch(
+        self, installer_path: str, target_chest: str | None = None
+    ) -> None:
+        """Prompts chest selection dialog for the given installer, or directly runs it if target_chest is set."""
+        chests = self.db.list_existing_prefixes()
+
+        if target_chest and target_chest in chests:
+            self._on_chest_run_installer(target_chest, installer_path)
+            return
+
+        # Show chest selector modal dialog
+        dialog = InstallChestSelectorDialog(installer_path, chests, parent=None)
+        if dialog.exec() == QDialog.Accepted:
+            if dialog.selected_chest:
+                self._on_chest_run_installer(dialog.selected_chest, installer_path)
+            elif dialog.request_create_new:
+                wizard = CreateChestWizard(
+                    self.recipes,
+                    self.active_gpu,
+                    self._get_runners_list(),
+                    parent=None,
+                )
+                if wizard.exec() == QDialog.Accepted:
+                    config = wizard.get_chest_config()
+                    name = config["name"]
+                    self.db.create_prefix(name, config["recipe_id"], config["runner"])
+                    self.refresh_data()
+                    self._on_chest_run_installer(name, installer_path)
+                else:
+                    if self.is_installer_mode:
+                        QApplication.quit()
+        else:
+            if self.is_installer_mode:
+                QApplication.quit()
 
     def win_to_linux_path(self, prefix_name: str, win_path: str) -> Path | None:
         """Converts a Windows C:\\ path to the Linux equivalent inside drive_c."""
@@ -2244,6 +2458,11 @@ class ThatchLauncher(QMainWindow):
         btn_later.clicked.connect(dialog.reject)
         layout.addWidget(btn_later)
 
+        def _on_dialog_finished():
+            if getattr(self, "is_installer_mode", False):
+                QApplication.quit()
+
+        dialog.finished.connect(_on_dialog_finished)
         dialog.show()  # Non-blocking so the installer keeps running
 
     def _queue_winetricks_injections(self, prefix_name: str, verbs: list[str]) -> None:
@@ -2535,7 +2754,11 @@ class ThatchLauncher(QMainWindow):
             self.toast.adjust_position()
 
     def closeEvent(self, event) -> None:
-        if hasattr(self, "tray_icon") and self.tray_icon is not None and self.tray_icon.isVisible():
+        if (
+            hasattr(self, "tray_icon")
+            and self.tray_icon is not None
+            and self.tray_icon.isVisible()
+        ):
             event.ignore()
             self.hide()
             from i18n import _

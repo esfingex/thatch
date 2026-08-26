@@ -449,13 +449,23 @@ class ThatchDB:
         conn.close()
 
 
+# ── Module-level lazy singleton — avoids re-opening SQLite on every i18n call ──
+_db_singleton: "ThatchDB | None" = None
+
+
+def _get_singleton() -> "ThatchDB":
+    """Returns the shared ThatchDB singleton, creating it on first call."""
+    global _db_singleton
+    if _db_singleton is None:
+        _db_singleton = ThatchDB()
+    return _db_singleton
+
+
 def get_setting(key: str, default: str = "") -> str:
-    """Reads a setting value from the global_config table in the default database."""
-    db = ThatchDB()
-    return db._get_config_val(key, default)
+    """Reads a setting value from the global_config table using the shared DB singleton."""
+    return _get_singleton()._get_config_val(key, default)
 
 
 def set_setting(key: str, value: str) -> None:
-    """Saves or updates a setting value in the global_config table."""
-    db = ThatchDB()
-    db._set_config_val(key, value)
+    """Saves or updates a setting value in the global_config table using the shared DB singleton."""
+    _get_singleton()._set_config_val(key, value)

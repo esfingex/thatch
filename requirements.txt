@@ -1,0 +1,4 @@
+# Thatch — Python Dependencies
+# System requirements: winetricks, wine (installed via pacman/apt, not pip)
+
+PySide6>=6.5.0

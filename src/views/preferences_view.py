@@ -27,6 +27,8 @@ class PreferencesView(QWidget):
 
     toast_requested = Signal(str)
     update_catalog_requested = Signal()
+    cleanup_orphans_requested = Signal()
+    register_context_menu_requested = Signal()
 
     def __init__(
         self, db: ThatchDB, runners: list[str], parent: QWidget | None = None
@@ -173,6 +175,22 @@ class PreferencesView(QWidget):
         )
         self.btn_update_catalog.clicked.connect(self.update_catalog_requested.emit)
 
+        self.btn_register_context_menu = QPushButton(_("btn_register_context_menu"))
+        self.btn_register_context_menu.setCursor(Qt.PointingHandCursor)
+        self.btn_register_context_menu.setStyleSheet(
+            "padding: 4px 10px; font-size: 11px; color: #10b981; background-color: #064e3b; border: 1px solid #059669; border-radius: 4px; margin-right: 8px;"
+        )
+        self.btn_register_context_menu.clicked.connect(
+            self.register_context_menu_requested.emit
+        )
+
+        self.btn_clean_orphans = QPushButton("🧹 Limpiar Links del Panel")
+        self.btn_clean_orphans.setCursor(Qt.PointingHandCursor)
+        self.btn_clean_orphans.setStyleSheet(
+            "padding: 4px 10px; font-size: 11px; color: #a1a1aa; background-color: #202024; border: 1px solid #3f3f46; border-radius: 4px; margin-right: 8px;"
+        )
+        self.btn_clean_orphans.clicked.connect(self.cleanup_orphans_requested.emit)
+
         self.btn_clear_cache = QPushButton(_("btn_clear_cache"))
         self.btn_clear_cache.setObjectName("RedBtnText")
         self.btn_clear_cache.setCursor(Qt.PointingHandCursor)
@@ -182,6 +200,8 @@ class PreferencesView(QWidget):
         cache_layout.addWidget(self.lbl_cache_title)
         cache_layout.addWidget(self.lbl_cache_size)
         cache_layout.addStretch(1)
+        cache_layout.addWidget(self.btn_register_context_menu)
+        cache_layout.addWidget(self.btn_clean_orphans)
         cache_layout.addWidget(self.btn_update_catalog)
         cache_layout.addWidget(self.btn_clear_cache)
         prefs_layout.addWidget(self.cache_mgr_frame)
@@ -225,6 +245,7 @@ class PreferencesView(QWidget):
         self.lbl_cache_title.setText(_("lbl_winetricks_cache_size"))
         self.btn_update_catalog.setText(_("btn_update_catalog"))
         self.btn_clear_cache.setText(_("btn_clear_cache"))
+        self.btn_register_context_menu.setText(_("btn_register_context_menu"))
         self.lbl_specs_title.setText(_("lbl_system_details"))
         self.lbl_specs.setText(_("win_specs"))
         self.lbl_lang.setText(_("lbl_app_language"))

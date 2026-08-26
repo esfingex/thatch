@@ -25,7 +25,9 @@ class ThatchSetup:
     def create_venv(self):
         """Crea el entorno virtual e instala los requerimientos"""
         if self.in_venv:
-            print("[!] Ya estás dentro de un entorno virtual. Se usarán las dependencias actuales.")
+            print(
+                "[!] Ya estás dentro de un entorno virtual. Se usarán las dependencias actuales."
+            )
         elif self.venv_dir.exists():
             print(f"[!] El entorno virtual ya existe en: {self.venv_dir}")
         else:

@@ -15,7 +15,7 @@
     "WINEARCH": "win64",
     "WINEESYNC": "1",
     "WINEMFSYNC": "1",
-    "WINEDLLOVERRIDES": "winegstreamer=",
+    "WINEDLLOVERRIDES": "lsapiw64=n,b;mscoree=d;wininet=b;winhttp=b;winegstreamer=",
     "PROTON_FORCE_LARGE_ADDRESS_AWARE": "1"
   },
   "description": "Receta para Pioneer DJ Rekordbox 6.x Professional. Requiere vcrun2019/2022, .NET 4.8, dxvk y msxml6. WINEDLLOVERRIDES deshabilita winegstreamer para evitar crashes en el arranque. Win10 mode obligatorio para el DRM de Pioneer."

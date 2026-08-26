@@ -26,12 +26,13 @@ class ProgramRowWidget(QWidget):
     """Row widget for a program in the Installed Programs list.
 
     States:
-    - linked: has an exe in Thatch DB → shows ▶ Ejecutar + Desinstalar
+    - linked: has an exe in Thatch DB → shows ▶ Ejecutar + 🔗 Eliminar Link + Desinstalar
     - detected: found in Wine registry but no exe linked → shows Vincular
     """
 
     run_clicked = Signal(str)  # game_name
     delete_clicked = Signal(str)  # game_name
+    unlink_clicked = Signal(str)  # game_name
     link_clicked = Signal(str, str)  # reg_program_id, install_location
 
     def __init__(
@@ -77,6 +78,18 @@ class ProgramRowWidget(QWidget):
             self.btn_run.clicked.connect(lambda: self.run_clicked.emit(display_name))
             layout.addWidget(self.btn_run)
 
+            # 🔗 Eliminar Link
+            self.btn_unlink = QPushButton("🔗 Eliminar Link")
+            self.btn_unlink.setCursor(Qt.PointingHandCursor)
+            self.btn_unlink.setStyleSheet(
+                "min-height: 22px; max-height: 22px; padding: 0px 10px; font-size: 11px; font-weight: bold; background-color: #202024; color: #f87171; border: 1px solid #3f3f46;"
+            )
+            self.btn_unlink.clicked.connect(
+                lambda: self.unlink_clicked.emit(display_name)
+            )
+            layout.addWidget(self.btn_unlink)
+
+            # Desinstalar
             self.btn_delete = QPushButton("Desinstalar")
             self.btn_delete.setObjectName("RedBtnText")
             self.btn_delete.setCursor(Qt.PointingHandCursor)
@@ -122,6 +135,7 @@ class ChestDetailsView(QWidget):
     add_program_requested = Signal(str)
     run_program_requested = Signal(str, str)  # prefix_name, game_name
     remove_program_requested = Signal(str, str)  # prefix_name, game_name
+    remove_link_requested = Signal(str, str)  # prefix_name, game_name
     run_installer_requested = Signal(str, str)  # prefix_name, installer_exe_path
     install_dependency_requested = Signal(str, str)  # prefix_name, verb
     remove_dependency_requested = Signal(str, str)  # prefix_name, verb
@@ -793,6 +807,9 @@ class ChestDetailsView(QWidget):
             )
             row_widget.run_clicked.connect(
                 lambda name: self.run_program_requested.emit(self.prefix_name, name)
+            )
+            row_widget.unlink_clicked.connect(
+                lambda name: self.remove_link_requested.emit(self.prefix_name, name)
             )
             row_widget.delete_clicked.connect(
                 lambda name: self.remove_program_requested.emit(self.prefix_name, name)

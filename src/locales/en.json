@@ -34,5 +34,13 @@
   "win_specs": "Thatch Version: 1.0.1 (Native Core)\nWine Engine Compatibility: Proton / Soda / System Wine\nWinetricks Client Version: Latest (Auto-updates via WINEPREFIX)",
   "lbl_app_language": "Language:",
   "opt_english": "English",
-  "opt_spanish": "Spanish"
+  "opt_spanish": "Spanish",
+  "btn_register_context_menu": "🛠️ Register System Context Menu",
+  "toast_context_menu_registered": "'Install with Thatch' context menu registered successfully!",
+  "install_selector_title": "📦 Install with Thatch",
+  "install_selector_subtitle": "Select target chest for the installer:",
+  "btn_install_here": "Install Here",
+  "btn_create_new_chest": "➕ Create New Chest",
+  "lbl_target_file": "Executable:",
+  "no_chests_found": "No chests created yet. Create a new one to install!"
 }

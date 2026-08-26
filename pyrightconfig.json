@@ -1,1 +1,16 @@
-{"extraPaths": ["./src"]}
+{
+  "pythonVersion": "3.10",
+  "venvPath": ".",
+  "venv": "venv",
+  "extraPaths": ["./src"],
+  "include": ["src", "thatch.py"],
+  "exclude": ["venv", "__pycache__", ".ruff_cache", "runners", "prefixes"],
+  "typeCheckingMode": "standard",
+  "reportMissingImports": true,
+  "reportMissingModuleSource": false,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": true,
+  "reportOptionalSubscript": true,
+  "reportAttributeAccessIssue": true
+}
+

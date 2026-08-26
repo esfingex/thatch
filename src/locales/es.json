@@ -34,5 +34,13 @@
   "win_specs": "Versión de Thatch: 1.0.1 (Núcleo Nativo)\nCompatibilidad: Proton / Soda / Wine del Sistema\nCliente de Winetricks: Última Versión (Auto-actualizable)",
   "lbl_app_language": "Idioma:",
   "opt_english": "Inglés",
-  "opt_spanish": "Español"
+  "opt_spanish": "Español",
+  "btn_register_context_menu": "🛠️ Registrar Menú Contextual del Sistema",
+  "toast_context_menu_registered": "¡Menú contextual 'Instalar con Thatch' registrado con éxito!",
+  "install_selector_title": "📦 Instalar con Thatch",
+  "install_selector_subtitle": "Selecciona el cofre de destino para el instalador:",
+  "btn_install_here": "Instalar aquí",
+  "btn_create_new_chest": "➕ Crear Nuevo Cofre",
+  "lbl_target_file": "Ejecutable:",
+  "no_chests_found": "No hay cofres creados aún. ¡Crea uno nuevo para instalar!"
 }
