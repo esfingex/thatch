@@ -160,9 +160,6 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             except Exception:
                 pass
 
-    env["TEMP"] = "C:\\windows\\temp"
-    env["TMP"] = "C:\\windows\\temp"
-
     dosdevices_dir = prefix_path / "dosdevices"
     dosdevices_dir.mkdir(parents=True, exist_ok=True)
     z_drive = dosdevices_dir / "z:"
