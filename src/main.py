@@ -1320,5 +1320,6 @@ if __name__ == "__main__":
 
     apply_theme(app)
     gui = ThatchLauncher()
-    gui.show()
+    if not gui.is_installer_mode:
+        gui.show()
     sys.exit(app.exec())

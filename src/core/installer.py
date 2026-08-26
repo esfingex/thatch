@@ -242,6 +242,8 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
                 except Exception:
                     pass
             show_post_installer_dialog(parent_launcher, p)
+            if getattr(parent_launcher, "is_installer_mode", False):
+                QApplication.quit()
 
         parent_launcher.installer_process.finished.connect(on_installer_finished)
         parent_launcher.installer_process.start(wine_cmd, args)
