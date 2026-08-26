@@ -263,24 +263,48 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
 
 def _boost_process_priority(pid: int) -> None:
-    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes."""
-    if pid <= 0:
-        return
+    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and its children."""
     import subprocess
 
+    target_pids = set()
+    if pid > 0:
+        target_pids.add(str(pid))
+        # Find child PIDs
+        try:
+            out = subprocess.check_output(
+                ["pgrep", "-P", str(pid)], stderr=subprocess.DEVNULL
+            ).decode()
+            for p in out.split():
+                if p.strip():
+                    target_pids.add(p.strip())
+        except Exception:
+            pass
+
+    # Also search for setup.tmp / setup.exe / unarc processes
     try:
-        subprocess.run(
-            ["renice", "-n", "-10", "-p", str(pid)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        subprocess.run(
-            ["ionice", "-c", "1", "-n", "0", "-p", str(pid)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        out = subprocess.check_output(
+            ["pgrep", "-f", "setup"], stderr=subprocess.DEVNULL
+        ).decode()
+        for p in out.split():
+            if p.strip():
+                target_pids.add(p.strip())
     except Exception:
         pass
+
+    for p in target_pids:
+        try:
+            subprocess.run(
+                ["renice", "-n", "-10", "-p", p],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            subprocess.run(
+                ["ionice", "-c", "1", "-n", "0", "-p", p],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception:
+            pass
 
 
 def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
