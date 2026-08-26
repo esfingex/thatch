@@ -9,20 +9,26 @@ class ThatchDB:
         # Resolve base directory relative to this source file (src/database.py)
         self.base_dir = Path(__file__).parent.parent.resolve()
 
-        # User data directory standard (~/.local/share/thatch)
-        self.user_data_dir = Path.home() / ".local" / "share" / "thatch"
+        # User data directory (~/thatch)
+        self.user_data_dir = Path.home() / "thatch"
         self.user_data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Database path (default to ~/.local/share/thatch/thatch_db.sqlite unless specified or legacy exists)
+        # Database path (default to ~/thatch/thatch_db.sqlite unless specified or legacy exists)
         legacy_db = self.base_dir / "thatch_db.sqlite"
+        old_local_db = Path.home() / ".local" / "share" / "thatch" / "thatch_db.sqlite"
         user_db = self.user_data_dir / "thatch_db.sqlite"
 
         if db_path:
             self.sqlite_path = db_path
         elif user_db.exists():
             self.sqlite_path = user_db
+        elif old_local_db.exists():
+            try:
+                shutil.copy2(old_local_db, user_db)
+                self.sqlite_path = user_db
+            except Exception:
+                self.sqlite_path = old_local_db
         elif legacy_db.exists():
-            # Migrate legacy db to user data dir
             try:
                 shutil.copy2(legacy_db, user_db)
                 self.sqlite_path = user_db
@@ -34,7 +40,7 @@ class ThatchDB:
         self.json_path = self.base_dir / "thatch_db.json"
         self.recipes_dir = self.base_dir / "config" / "recipes"
 
-        # Default storage directories in user home (~/.local/share/thatch)
+        # Default storage directories in ~/thatch
         self.default_prefixes_dir = self.user_data_dir / "prefixes"
         self.default_runners_dir = self.user_data_dir / "runners"
         self.default_winetricks_cache_dir = Path.home() / ".cache" / "winetricks"
@@ -42,15 +48,20 @@ class ThatchDB:
         self.default_prefixes_dir.mkdir(parents=True, exist_ok=True)
         self.default_runners_dir.mkdir(parents=True, exist_ok=True)
 
-        # Automatically migrate legacy workspace prefixes if present
-        legacy_prefixes = self.base_dir / "prefixes"
-        if legacy_prefixes.exists() and legacy_prefixes != self.default_prefixes_dir:
-            for p in legacy_prefixes.iterdir():
-                if p.is_dir() and not (self.default_prefixes_dir / p.name).exists():
-                    try:
-                        shutil.move(str(p), str(self.default_prefixes_dir / p.name))
-                    except Exception as e:
-                        print(f"[DB] Migration warning for legacy prefix {p.name}: {e}")
+        # Automatically migrate legacy prefixes from workspace or .local/share if present
+        for old_dir in [
+            self.base_dir / "prefixes",
+            Path.home() / ".local" / "share" / "thatch" / "prefixes",
+        ]:
+            if old_dir.exists() and old_dir != self.default_prefixes_dir:
+                for p in old_dir.iterdir():
+                    if p.is_dir() and not (self.default_prefixes_dir / p.name).exists():
+                        try:
+                            shutil.copytree(
+                                str(p), str(self.default_prefixes_dir / p.name)
+                            )
+                        except Exception as e:
+                            print(f"[DB] Migration warning for prefix {p.name}: {e}")
 
         self._games_cache = None
         self._config_cache = None
