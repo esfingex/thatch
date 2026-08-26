@@ -113,7 +113,8 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
     prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name
     drive_c = prefix_path / "drive_c"
-    syswow64 = drive_c / "windows" / "syswow64"
+    windows_dir = drive_c / "windows"
+    syswow64 = windows_dir / "syswow64"
 
     installer_arch = get_pe_arch(installer_path)
     wine_cmd = get_wine_cmd(parent_launcher.db, runner_path, installer_path)
@@ -142,6 +143,8 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
                 shutil.copy2(dll_file, system32 / dll_file.name)
                 if syswow64.exists():
                     shutil.copy2(dll_file, syswow64 / dll_file.name)
+                if windows_dir.exists():
+                    shutil.copy2(dll_file, windows_dir / dll_file.name)
             except Exception:
                 pass
 
@@ -197,9 +200,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["WINE_LARGE_ADDRESS_AWARE"] = "0"
     env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
 
-    dll_overrides = (
-        "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b;cls-lolz=n,b;cls-srep=n,b"
-    )
+    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
     if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
         env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
     else:

@@ -169,7 +169,7 @@ class ZeusInstallerDialog(QDialog):
 
         if self.opt_repack.isChecked():
             env["WINEDLLOVERRIDES"] = (
-                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b;cls-lolz=n,b;cls-srep=n,b"
+                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
             )
             env["WINEESYNC"] = "0"
             env["WINEFSYNC"] = "0"
