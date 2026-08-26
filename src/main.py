@@ -216,8 +216,8 @@ class ThatchLauncher(QMainWindow):
         self.wine_runners_view.toast_requested.connect(self._on_toast_requested)
         self.view_stack.addWidget(self.wine_runners_view)
 
-        # View 5: Recipes View
-        recipes_dir = Path("config/recipes")
+        # View 5: Recipes View (Mapas)
+        recipes_dir = self.db.recipes_dir
         self.recipes_view = RecipesView(recipes_dir, self)
         self.view_stack.addWidget(self.recipes_view)
 
