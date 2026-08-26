@@ -161,16 +161,13 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         except Exception:
             pass
 
+    # Ensure no D: symlink is present so installer defaults target destination to C:\Games\
     d_drive = dosdevices_dir / "d:"
     if d_drive.is_symlink() or d_drive.exists():
         try:
             d_drive.unlink()
         except Exception:
             pass
-    try:
-        d_drive.symlink_to(setup_dir)
-    except Exception:
-        pass
 
     vd_enabled = (
         bool(associated_game.get("virtual_desktop", False))
@@ -192,10 +189,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
     if "WINEDLLOVERRIDES" in env:
         env["WINEDLLOVERRIDES"] = (
-            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n;unarc=n,b;isdone=n,b"
+            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n,b"
         )
     else:
-        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n;unarc=n,b;isdone=n,b"
+        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n,b"
 
     try:
         parent_launcher._pre_install_program_ids = {
