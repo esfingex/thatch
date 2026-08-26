@@ -48,27 +48,25 @@ class ThatchDB:
         self.default_prefixes_dir.mkdir(parents=True, exist_ok=True)
         self.default_runners_dir.mkdir(parents=True, exist_ok=True)
 
-        # Automatically migrate legacy prefixes from workspace or .local/share if present
-        for old_dir in [
-            self.base_dir / "prefixes",
-            Path.home() / ".local" / "share" / "thatch" / "prefixes",
-        ]:
-            if old_dir.exists() and old_dir != self.default_prefixes_dir:
-                for p in old_dir.iterdir():
-                    if p.is_dir():
-                        target = self.default_prefixes_dir / p.name
-                        if not target.exists():
-                            try:
-                                shutil.move(str(p), str(target))
-                            except Exception as e:
-                                print(
-                                    f"[DB] Migration warning for prefix {p.name}: {e}"
-                                )
-                        else:
-                            try:
-                                shutil.rmtree(str(p), ignore_errors=True)
-                            except Exception:
-                                pass
+        # Automatically migrate legacy prefixes from .local/share if present
+        old_local_prefixes = Path.home() / ".local" / "share" / "thatch" / "prefixes"
+        if (
+            old_local_prefixes.exists()
+            and old_local_prefixes != self.default_prefixes_dir
+        ):
+            for p in old_local_prefixes.iterdir():
+                if p.is_dir():
+                    target = self.default_prefixes_dir / p.name
+                    if not target.exists():
+                        try:
+                            shutil.move(str(p), str(target))
+                        except Exception as e:
+                            print(f"[DB] Migration warning for prefix {p.name}: {e}")
+                    else:
+                        try:
+                            shutil.rmtree(str(p), ignore_errors=True)
+                        except Exception:
+                            pass
 
         self._games_cache = None
         self._config_cache = None

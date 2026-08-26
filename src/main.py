@@ -689,7 +689,6 @@ class ThatchLauncher(QMainWindow):
 
             for p_dir in [
                 self.db.get_prefixes_dir(),
-                self.db.base_dir / "prefixes",
                 Path.home() / ".local" / "share" / "thatch" / "prefixes",
             ]:
                 target = p_dir / prefix_name
