@@ -1298,7 +1298,6 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setApplicationName("Thatch")
-    app.setApplicationDisplayName("Thatch")
     app.setDesktopFileName("thatch-installer")
     app.setQuitOnLastWindowClosed(False)
     icon_path = Path(__file__).parent / "assets" / "icon.png"
