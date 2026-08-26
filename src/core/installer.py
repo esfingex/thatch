@@ -146,12 +146,20 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         parents=True, exist_ok=True
     )
 
+    setup_file = Path(installer_path).resolve()
+    setup_dir = setup_file.parent
+
+    # Pre-create specific game folder for CLS.ini ldmfTempPath={app} swap file creation
+    game_folder_name = setup_file.stem.replace("[FitGirl Repack]", "").strip()
+    if game_folder_name.lower().startswith("setup"):
+        game_folder_name = setup_dir.name.replace("[FitGirl Repack]", "").strip()
+
+    target_app_dir = drive_c / "Games" / game_folder_name
+    target_app_dir.mkdir(parents=True, exist_ok=True)
+
     system32 = drive_c / "windows" / "system32"
     system32.mkdir(parents=True, exist_ok=True)
     syswow64.mkdir(parents=True, exist_ok=True)
-
-    setup_file = Path(installer_path).resolve()
-    setup_dir = setup_file.parent
 
     # Auto-inject installer helper DLLs (unarc, isdone, cls-*, atl*) directly into system32 / syswow64
     if setup_dir.exists():
@@ -187,6 +195,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         pass
 
     setup_dos_path = f"D:\\{setup_file.name}"
+    target_dir_arg = f"/DIR=C:\\Games\\{game_folder_name}"
 
     vd_enabled = (
         bool(associated_game.get("virtual_desktop", False))
@@ -205,10 +214,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             "explorer",
             f"/desktop=Thatch,{vd_res}",
             setup_dos_path,
-            "/DIR=C:\\Games",
+            target_dir_arg,
         ]
     else:
-        args = [setup_dos_path, "/DIR=C:\\Games"]
+        args = [setup_dos_path, target_dir_arg]
 
     # Force disable Esync and Fsync during setup execution to prevent cls-lolz thread deadlocks
     env["WINEESYNC"] = "0"
