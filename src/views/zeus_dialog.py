@@ -168,8 +168,11 @@ class ZeusInstallerDialog(QDialog):
         env["WINETRICKS_CACHE"] = str(self.db.get_winetricks_cache_dir())
 
         if self.opt_repack.isChecked():
-            env["WINEDLLOVERRIDES"] = "atl100=n;unarc,isdone=n,b"
+            env["WINEDLLOVERRIDES"] = (
+                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
+            )
             env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
+            env["WINE_LARGE_ADDRESS_AWARE"] = "1"
             self.console.append(
                 ":: [ZEUS-ENGINE] Optimización de descompresión y direccionamiento de memoria ACTIVADA."
             )
