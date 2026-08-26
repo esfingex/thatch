@@ -192,12 +192,15 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         args = [str(setup_file), "/DIR=C:\\Games"]
 
     env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
+    env["WINE_LARGE_ADDRESS_AWARE"] = "1"
+    env["PATH"] = f"{str(setup_dir)}:{env.get('PATH', '')}"
+
     if "WINEDLLOVERRIDES" in env:
         env["WINEDLLOVERRIDES"] = (
-            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n,b"
+            env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
         )
     else:
-        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n,b"
+        env["WINEDLLOVERRIDES"] = "mscoree,mshtml=d;atl100=n;unarc,isdone=n,b"
 
     try:
         parent_launcher._pre_install_program_ids = {
