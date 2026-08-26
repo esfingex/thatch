@@ -1,4 +1,5 @@
 import sys
+import shutil
 from pathlib import Path
 from PySide6.QtWidgets import (
     QDialog,
@@ -120,7 +121,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     else:
         env.pop("WINEARCH", None)
 
-    # Ensure writeable drive_c directories (Games, Temp, AppData) exist in prefix
+    # Ensure writeable drive_c directories (Games, Temp, AppData, system32, syswow64) exist in prefix
     prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name
     drive_c = prefix_path / "drive_c"
     (drive_c / "Games").mkdir(parents=True, exist_ok=True)
@@ -129,6 +130,24 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     (drive_c / "users" / "steamuser" / "AppData" / "Local" / "Temp").mkdir(
         parents=True, exist_ok=True
     )
+
+    system32 = drive_c / "windows" / "system32"
+    syswow64 = drive_c / "windows" / "syswow64"
+    system32.mkdir(parents=True, exist_ok=True)
+    syswow64.mkdir(parents=True, exist_ok=True)
+
+    setup_file = Path(installer_path).resolve()
+    setup_dir = setup_file.parent
+
+    # Auto-inject installer helper DLLs (unarc, isdone, cls-*, atl*) directly into system32 / syswow64
+    if setup_dir.exists():
+        for dll_file in setup_dir.glob("*.dll"):
+            try:
+                shutil.copy2(dll_file, system32 / dll_file.name)
+                if syswow64.exists():
+                    shutil.copy2(dll_file, syswow64 / dll_file.name)
+            except Exception:
+                pass
 
     env["TEMP"] = "C:\\windows\\temp"
     env["TMP"] = "C:\\windows\\temp"
@@ -142,8 +161,6 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         except Exception:
             pass
 
-    setup_file = Path(installer_path).resolve()
-    setup_dir = setup_file.parent
     d_drive = dosdevices_dir / "d:"
     if d_drive.is_symlink() or d_drive.exists():
         try:
