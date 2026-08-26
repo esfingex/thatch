@@ -161,6 +161,28 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     system32.mkdir(parents=True, exist_ok=True)
     syswow64.mkdir(parents=True, exist_ok=True)
 
+    # Inject patched cmd.exe.so to resolve Wine cmd.exe move-overwrite prompt deadlock on FitGirl installers
+    cache_cmd = parent_launcher.db.base_dir / "cache" / "cmd.exe.so"
+    if not cache_cmd.exists():
+        cache_cmd.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            import urllib.request
+
+            urllib.request.urlretrieve(
+                "https://github.com/Francesco149/wine/releases/download/move-overwrite-fix-r2/cmd.exe.so",
+                str(cache_cmd),
+            )
+        except Exception:
+            pass
+
+    if cache_cmd.exists():
+        for target_sys in [system32, syswow64]:
+            if target_sys.exists():
+                try:
+                    shutil.copy2(cache_cmd, target_sys / "cmd.exe.so")
+                except Exception:
+                    pass
+
     # Auto-inject installer helper DLLs (unarc, isdone, cls-*, atl*) directly into system32 / syswow64
     if setup_dir.exists():
         for dll_file in setup_dir.rglob("*.dll"):
@@ -223,6 +245,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     env["WINEESYNC"] = "0"
     env["WINEFSYNC"] = "0"
     env["WINEMFSYNC"] = "0"
+
+    # Suppress cmd.exe move/copy overwrite confirmation prompts (prevent FitGirl batch script hangs)
+    env["COPYCMD"] = "/Y"
+    env["DIRCMD"] = "/O:N"
 
     # Limit xtool and srep decompressor thread contention on Linux anonymous pipes (prevent 28-thread pipe deadlocks)
     env["XTOOL_THREADS"] = "4"
