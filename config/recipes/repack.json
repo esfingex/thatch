@@ -6,10 +6,11 @@
     "WINEESYNC": "1",
     "WINEFSYNC": "0",
     "WINENTSYNC": "0",
+    "PROTON_NO_NTSYNC": "1",
     "WINE_LARGE_ADDRESS_AWARE": "1",
     "PROTON_FORCE_LARGE_ADDRESS_AWARE": "1",
     "WINEDLLOVERRIDES": "mscoree,mshtml=d"
   },
   "description": "Mapa optimizado específicamente para desempaquetar instaladores FitGirl / Repacks con descompresión LOLZ/SREP/Magic2 sin cuelgues ni errores de unarc.",
-  "notes": "RECETA VERIFICADA (sep 2026, portada desde fiftypack): proton-cachyos-slr 11 (32-bit nativo) + esync + ntsync off + LAA instaló Yet Another Zombie Survivors completo en 3 min. Lecciones: lutris-GE-Proton8-26 y GE-Proton10-34 crashean xtool.exe (dispatch de syscalls) -> unarc -11; los wine wow64-only cuelgan unarc en el primer archivo grande (barra ~2.6%); WINEESYNC=0 + WINEFSYNC=0 en estos builds NO desactivan ntsync (caen al backend server-side) -> usar WINEESYNC=1. La casilla 'Limit RAM to 2GB' del instalador quedó SIN marcar en la corrida exitosa (modo silencioso). Sin verbos de winetricks necesarios."
+  "notes": "RECETA VERIFICADA (sep 2026, portada desde fiftypack): proton-cachyos-slr 11 (32-bit nativo) + PROTON_NO_NTSYNC=1 + LAA instaló Yet Another Zombie Survivors completo en 3 min y Borderlands 4 (76 GB) en ~1h. Lecciones: los runners Proton (GE y cachyos) IGNORAN WINEESYNC/WINENTSYNC y fuerzan ntsync — con repacks grandes el pipeline se cuelga en ntsync_schedule; la única forma de quitarlo es PROTON_NO_NTSYNC=1 (cae a fsync). Los wine wow64-only cuelgan unarc en el primer archivo grande (barra ~2.6%). La casilla 'Limit RAM to 2GB' quedó SIN marcar en las corridas exitosas (modo silencioso). Sin verbos de winetricks necesarios."
 }

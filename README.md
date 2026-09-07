@@ -78,8 +78,11 @@ sudo pacman -S proton-cachyos-slr   # repo de CachyOS (no AUR)
 (`i386-unix`). Lecciones verificadas (sep 2026): los Proton-GE viejos crashean
 `xtool.exe` de FitGirl (access violation en la página de dispatch de syscalls →
 `unarc -11`), y los wine wow64-only cuelgan `unarc.dll` en el primer archivo
-grande (barra clavada ~2.6%). La receta `repack` usa esync forzado (`WINEESYNC=1`)
-+ `WINENTSYNC=0` + Large Address Aware — instalación verificada de punta a punta.
+grande (barra clavada ~2.6%). Los runners Proton **ignoran** `WINEESYNC`/
+`WINENTSYNC` y fuerzan ntsync: para repacks grandes hay que usar
+`PROTON_NO_NTSYNC=1` (cae a fsync) o el pipeline se cuelga en `ntsync_schedule`.
+La receta `repack` incluye esta combinación + Large Address Aware — verificada
+de punta a punta con Yet Another Zombie Survivors y Borderlands 4.
 
 ### Installation
 
