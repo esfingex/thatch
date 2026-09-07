@@ -63,6 +63,24 @@ sudo apt update
 sudo apt install python3 python3-venv winetricks wine
 ```
 
+### Motores Wine de sistema (System Runners)
+
+Thatch descubre automáticamente los **compatibility tools de Steam** instalados a
+nivel de sistema (`/usr/share/steam/compatibilitytools.d/` y los de
+`~/.steam/steam/compatibilitytools.d/`) y los ofrece como motores en todas las
+listas de runners. El motor recomendado para repacks FitGirl (receta `repack`) es:
+
+```bash
+sudo pacman -S proton-cachyos-slr   # repo de CachyOS (no AUR)
+```
+
+`proton-cachyos-slr` es el Proton oficial de CachyOS con **soporte 32-bit nativo**
+(`i386-unix`). Lecciones verificadas (sep 2026): los Proton-GE viejos crashean
+`xtool.exe` de FitGirl (access violation en la página de dispatch de syscalls →
+`unarc -11`), y los wine wow64-only cuelgan `unarc.dll` en el primer archivo
+grande (barra clavada ~2.6%). La receta `repack` usa esync forzado (`WINEESYNC=1`)
++ `WINENTSYNC=0` + Large Address Aware — instalación verificada de punta a punta.
+
 ### Installation
 
 1. **Clone the repository**:

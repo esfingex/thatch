@@ -7,6 +7,7 @@ arch=('any')
 url="https://github.com/esfingex/thatch"
 license=('GPL3')
 depends=('python' 'pyside6' 'winetricks' 'wine')
+optdepends=('proton-cachyos-slr: Proton de CachyOS con 32-bit nativo - motor recomendado para repacks FitGirl (receta "repack")')
 makedepends=('git' 'python-setuptools')
 provides=('thatch')
 conflicts=('thatch')

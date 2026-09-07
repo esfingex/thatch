@@ -1,22 +1,15 @@
 {
-  "display_name": "Instaladores Repack / InnoSetup (Compresión Extrema)",
-  "required_verbs": [
-    "win10",
-    "vcrun2022",
-    "vcrun2013",
-    "d3dcompiler_47"
-  ],
-  "recommended_runner": "lutris-GE-Proton8-26-x86_64",
+  "display_name": "Instaladores Repack / FitGirl / InnoSetup (Compresión Extrema)",
+  "required_verbs": [],
+  "recommended_runner": "proton-cachyos-slr",
   "performance_env": {
-    "WINEESYNC": "0",
-    "WINEMFSYNC": "0",
+    "WINEESYNC": "1",
     "WINEFSYNC": "0",
-    "WINE_LARGE_ADDRESS_AWARE": "0",
-    "PROTON_FORCE_LARGE_ADDRESS_AWARE": "0",
-    "WINE_SIMULATE_WRITE_COPY": "1",
-    "WINE_DISABLE_FAST_ATTACH": "1",
-    "XTOOL_THREADS": "4",
-    "SREP_THREADS": "4"
+    "WINENTSYNC": "0",
+    "WINE_LARGE_ADDRESS_AWARE": "1",
+    "PROTON_FORCE_LARGE_ADDRESS_AWARE": "1",
+    "WINEDLLOVERRIDES": "mscoree,mshtml=d"
   },
-  "description": "Mapa optimizado específicamente para desempaquetar archivos comprimidos (Repacks/InnoSetup) con simulación de páginas Copy-On-Write y runner GE-Proton."
+  "description": "Mapa optimizado específicamente para desempaquetar instaladores FitGirl / Repacks con descompresión LOLZ/SREP/Magic2 sin cuelgues ni errores de unarc.",
+  "notes": "RECETA VERIFICADA (sep 2026, portada desde fiftypack): proton-cachyos-slr 11 (32-bit nativo) + esync + ntsync off + LAA instaló Yet Another Zombie Survivors completo en 3 min. Lecciones: lutris-GE-Proton8-26 y GE-Proton10-34 crashean xtool.exe (dispatch de syscalls) -> unarc -11; los wine wow64-only cuelgan unarc en el primer archivo grande (barra ~2.6%); WINEESYNC=0 + WINEFSYNC=0 en estos builds NO desactivan ntsync (caen al backend server-side) -> usar WINEESYNC=1. La casilla 'Limit RAM to 2GB' del instalador quedó SIN marcar en la corrida exitosa (modo silencioso). Sin verbos de winetricks necesarios."
 }

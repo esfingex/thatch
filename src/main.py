@@ -336,17 +336,20 @@ class ThatchLauncher(QMainWindow):
 
     def _get_runners_list(self) -> list[str]:
         runners_dir = self.db.get_runners_dir()
+        names = set()
         if runners_dir.exists():
-            return sorted(
-                [
-                    d.name
-                    for d in runners_dir.iterdir()
-                    if d.is_dir()
-                    and "aarch64" not in d.name.lower()
-                    and "arm64" not in d.name.lower()
-                ]
+            names.update(
+                d.name
+                for d in runners_dir.iterdir()
+                if d.is_dir()
+                and "aarch64" not in d.name.lower()
+                and "arm64" not in d.name.lower()
             )
-        return []
+        # Motores de sistema (compat tools de Steam: proton-cachyos-slr, etc.)
+        from core.wine import discover_system_runners
+
+        names.update(name for name, _ in discover_system_runners())
+        return sorted(names)
 
     def refresh_data(self) -> None:
         """Reloads active lists across all widgets."""

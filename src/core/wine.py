@@ -2,6 +2,40 @@ from pathlib import Path
 from database import ThatchDB
 from hardware import compile_performance_env
 
+# Directorios estándar donde viven los compatibility tools de Steam
+# (motores instalados vía pacman, como proton-cachyos-slr, o por Steam).
+SYSTEM_RUNNER_DIRS = [
+    Path("/usr/share/steam/compatibilitytools.d"),
+    Path.home() / ".steam" / "steam" / "compatibilitytools.d",
+    Path.home() / ".local" / "share" / "Steam" / "compatibilitytools.d",
+]
+
+
+def discover_system_runners() -> list[tuple[str, Path]]:
+    """Devuelve (nombre, carpeta) de los motores wine instalados a nivel de sistema."""
+    found: list[tuple[str, Path]] = []
+    for base in SYSTEM_RUNNER_DIRS:
+        if not base.is_dir():
+            continue
+        for d in base.iterdir():
+            if d.is_dir() and (d / "files" / "bin" / "wine").exists():
+                found.append((d.name, d))
+    return found
+
+
+def resolve_runner_path(runners_dir: Path, runner_name: str) -> Path | None:
+    """Resuelve la carpeta de un runner: primero en runners_dir, luego en los
+    motores de sistema (compat tools de Steam). Los symlinks rotos en
+    runners_dir caen automáticamente a la fuente de sistema."""
+    local = runners_dir / runner_name
+    if local.exists():
+        return local
+    for sys_dir in SYSTEM_RUNNER_DIRS:
+        candidate = sys_dir / runner_name
+        if candidate.exists():
+            return candidate
+    return None
+
 
 def get_pe_arch(exe_path: str | Path) -> str:
     """
@@ -88,9 +122,9 @@ def get_wine_env(
         )
     )
     runners_dir = db.get_runners_dir()
-    runner_path = runners_dir / selected_runner
+    runner_path = resolve_runner_path(runners_dir, selected_runner)
 
-    if runner_path.exists():
+    if runner_path:
         bin_dir = (
             runner_path / "files" / "bin"
             if (runner_path / "files").exists()
