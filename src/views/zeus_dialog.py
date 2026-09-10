@@ -168,16 +168,23 @@ class ZeusInstallerDialog(QDialog):
         env["WINETRICKS_CACHE"] = str(self.db.get_winetricks_cache_dir())
 
         if self.opt_repack.isChecked():
-            env["WINEDLLOVERRIDES"] = (
-                "mscoree=d;mshtml=d;atl100=n,b;unarc=n,b;isdone=n,b"
-            )
+            env["WINEDLLOVERRIDES"] = "unarc=n,b;isdone=n,b;mscoree=d;mshtml=d;atl100=n,b"
+            env["NO_AT_BRIDGE"] = "1"
+            env["XLIB_SKIP_ARGB_VISUALS"] = "1"
+            env["WINENTSYNC"] = "0"
+            env["WINE_DISABLE_NTSYNC"] = "1"
+            env["WINE_DISABLE_FAST_SYNC"] = "1"
             env["WINEESYNC"] = "0"
             env["WINEFSYNC"] = "0"
             env["WINEMFSYNC"] = "0"
-            env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
-            env["WINE_LARGE_ADDRESS_AWARE"] = "0"
+            env["XTOOL_THREADS"] = "4"
+            env["SREP_THREADS"] = "4"
+            env["LOLZ_THREADS"] = "4"
+            env["MAX_THREADS"] = "4"
+            env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
+            env["WINE_LARGE_ADDRESS_AWARE"] = "1"
             self.console.append(
-                ":: [ZEUS-ENGINE] Optimización de descompresión (LAA=0, Sync=0, DLL Overrides) ACTIVADA."
+                ":: [ZEUS-ENGINE] Optimización de descompresión (LAA=1, Sync=0, Thread limits, DLL Overrides) ACTIVADA."
             )
         else:
             self.console.append(
@@ -187,6 +194,13 @@ class ZeusInstallerDialog(QDialog):
         selected_runner = "Wine del Sistema (/usr/bin/wine)"
         if self.parent() and hasattr(self.parent(), "details_pane"):
             selected_runner = self.parent().details_pane.combo_runners.currentText()
+
+        if selected_runner == "Wine del Sistema (/usr/bin/wine)" and hasattr(self.parent(), "_get_runners_list"):
+            runners = self.parent()._get_runners_list()
+            for r in runners:
+                if any(k in r.lower() for k in ("proton", "ge", "lutris")):
+                    selected_runner = r
+                    break
 
         runners_dir = self.db.get_runners_dir()
         runner_path = runners_dir / selected_runner

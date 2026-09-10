@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QFileDialog,
     QApplication,
+    QProgressBar,
+    QWidget,
 )
 from PySide6.QtCore import QTimer, QProcess, QProcessEnvironment, Qt
 from views import InstallChestSelectorDialog, CreateChestWizard
@@ -89,8 +91,91 @@ def prompt_installer_launch(
             QApplication.quit()
 
 
+def run_native_innoextract(parent_launcher, prefix_name: str, installer_path: str) -> bool:
+    """
+    Natively extracts InnoSetup / FitGirl setup payloads directly on Linux using innoextract
+    without invoking Wine or GUI wizards.
+    """
+    import subprocess
+    import shutil
+    from pathlib import Path
+
+    setup_file = Path(installer_path).resolve()
+    game_folder_name = setup_file.stem.replace("[FitGirl Repack]", "").strip()
+    if game_folder_name.lower().startswith("setup"):
+        game_folder_name = setup_file.parent.name.replace("[FitGirl Repack]", "").strip()
+
+    prefix_path = parent_launcher.db.get_prefixes_dir() / prefix_name
+    drive_c = prefix_path / "drive_c"
+    target_app_dir = drive_c / "Games" / game_folder_name
+    target_app_dir.mkdir(parents=True, exist_ok=True)
+
+    parent_launcher.toast.show_message(
+        f"⚡ Extracción nativa con innoextract iniciada para '{game_folder_name}'..."
+    )
+
+    try:
+        res = subprocess.run(
+            ["innoextract", "-e", "-d", str(target_app_dir), str(setup_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        app_subfolder = target_app_dir / "app"
+        if app_subfolder.exists() and app_subfolder.is_dir():
+            for item in app_subfolder.iterdir():
+                dest = target_app_dir / item.name
+                if not dest.exists():
+                    shutil.move(str(item), str(dest))
+            try:
+                shutil.rmtree(app_subfolder, ignore_errors=True)
+            except Exception:
+                pass
+
+        tmp_subfolder = target_app_dir / "tmp"
+        if tmp_subfolder.exists():
+            try:
+                shutil.rmtree(tmp_subfolder, ignore_errors=True)
+            except Exception:
+                pass
+
+        parent_launcher.toast.show_message("¡Extracción nativa completada con éxito!")
+        show_post_installer_dialog(parent_launcher, prefix_name)
+        return True
+    except Exception as e:
+        print(f"[innoextract] Failed to run native extraction: {e}")
+        return False
+
+
 def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) -> None:
-    """Spawns asynchronous Wine installer process for the target chest."""
+    """Spawns asynchronous Wine installer process or native innoextract for the target chest."""
+    setup_file = Path(installer_path).resolve()
+    setup_dir = setup_file.parent
+
+    # Detect if installer is a repack (FitGirl, Dodi, ElAmigos) with custom compressed bin payloads
+    is_repack = False
+    if setup_dir.exists():
+        repack_files = (
+            list(setup_dir.glob("fg-*.bin"))
+            + list(setup_dir.glob("doi-*.bin"))
+            + list(setup_dir.glob("cls-*.dll"))
+            + list(setup_dir.glob("unarc.dll"))
+            + list(setup_dir.glob("*.bin"))
+        )
+        if repack_files:
+            is_repack = True
+
+    # Bypass innoextract for FitGirl / repack installers because innoextract cannot unpack custom fg-*.bin archives
+    if not is_repack and shutil.which("innoextract"):
+        try:
+            if run_native_innoextract(parent_launcher, prefix_name, installer_path):
+                if getattr(parent_launcher, "is_installer_mode", False):
+                    QApplication.quit()
+                return
+        except Exception as inno_err:
+            print(f"[Installer] Native extraction fallback to Wine: {inno_err}")
+
     associated_game = None
     for gname, ginfo in parent_launcher.db.list_games().items():
         if ginfo.get("prefix") == prefix_name:
@@ -103,9 +188,12 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         else "default_gaming"
     )
     runner_override = associated_game.get("runner") if associated_game else None
-    ge_runner = parent_launcher.db.get_runners_dir() / "lutris-GE-Proton8-26-x86_64"
-    if not runner_override and ge_runner.exists():
-        runner_override = "lutris-GE-Proton8-26-x86_64"
+    if not runner_override or runner_override == "Wine del Sistema (/usr/bin/wine)":
+        runners = parent_launcher._get_runners_list()
+        for r in runners:
+            if any(k in r.lower() for k in ("proton", "ge", "lutris")):
+                runner_override = r
+                break
 
     env, runner_path = get_wine_env(
         parent_launcher.db,
@@ -125,6 +213,107 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     wine_cmd = get_wine_cmd(parent_launcher.db, runner_path, installer_path)
     if installer_arch == "x64" or syswow64.exists():
         env["WINEARCH"] = "win64"
+
+    # Wine preferido para repacks (solo afecta al proceso del instalador, no a
+    # la selección de runner de la UI): el wine verificado tiene 32-bit nativo
+    # y dispatch de syscalls estable. GE-Proton 10-34 crashea el decompresor
+    # 64-bit del instalador (access violation determinística en la página de
+    # dispatch -> unarc -11), así que se evita si hay alternativa.
+    if is_repack:
+        verified_wine = Path(
+            "/usr/share/steam/compatibilitytools.d/proton-cachyos-slr/files/bin/wine"
+        )
+        if verified_wine.exists():
+            wine_cmd = str(verified_wine)
+            lib_dir = verified_wine.parent.parent / "lib"
+            env["PATH"] = f"{verified_wine.parent}:{env.get('PATH', '')}"
+            env["LD_LIBRARY_PATH"] = f"{lib_dir}:{env.get('LD_LIBRARY_PATH', '')}"
+
+    # Configure all environment variables BEFORE wineboot/wineserver initialization
+    env["NO_AT_BRIDGE"] = "1"
+    env["XLIB_SKIP_ARGB_VISUALS"] = "1"
+
+    # Sync backend para instaladores (receta verificada):
+    # - Con WINEESYNC=0/WINEFSYNC=0 estos wines caen a ntsync, y ntsync no
+    #   soporta PulseEvent -> spinlocks en los workers de descompresión
+    #   (instaladores clavados en el primer archivo grande).
+    # - Forzar esync resuelve el spinlock; WINENTSYNC=0 desactiva ntsync en los
+    #   builds que lo soportan. WINE_DISABLE_NTSYNC/WINE_DISABLE_FAST_SYNC no
+    #   tienen efecto en GE-Proton 10-34 (verificado empíricamente), por lo que
+    #   no se usan.
+    env["WINEESYNC"] = "1"
+    env["WINEFSYNC"] = "0"
+    env["WINENTSYNC"] = "0"
+
+    # Suppress cmd.exe move/copy overwrite confirmation prompts (prevent FitGirl batch script hangs)
+    env["COPYCMD"] = "/Y"
+    env["DIRCMD"] = "/O:N"
+
+    # Limit xtool, srep, and lolz decompressor thread contention on Linux anonymous pipes (prevent pipe deadlocks)
+    env["XTOOL_THREADS"] = "4"
+    env["SREP_THREADS"] = "4"
+    env["LOLZ_THREADS"] = "4"
+    env["MAX_THREADS"] = "4"
+
+    # Enable Large Address Aware (LAA=1) to allow 32-bit processes up to 4GB virtual address space
+    # Repack decompressors (unarc.dll / cls-lolz.exe) require >2GB RAM buffers during extraction
+    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
+    env["WINE_LARGE_ADDRESS_AWARE"] = "1"
+
+    # Enable native unarc.dll and ISDone.dll overrides so InnoSetup decompression procedures load without 'Could not call proc' error
+    dll_overrides = "unarc=n,b;isdone=n,b;mscoree=d;mshtml=d;atl100=n,b"
+    if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
+        env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
+    else:
+        env["WINEDLLOVERRIDES"] = dll_overrides
+
+    # Terminate any lingering wineserver before initializing prefix so wineserver inherits clean env
+    import subprocess
+    try:
+        wineserver_bin = (
+            Path(wine_cmd).parent / "wineserver"
+            if Path(wine_cmd).parent.name in ("bin", "files")
+            else "wineserver"
+        )
+        subprocess.run(
+            [str(wineserver_bin), "-k"],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
+    # Pre-initialize brand new Wine prefix cleanly using wineboot -u if system.reg does not exist yet
+    system_reg = prefix_path / "system.reg"
+    if not system_reg.exists():
+        try:
+            parent_launcher.toast.show_message("Inicializando nuevo prefijo Wine...")
+        except Exception:
+            pass
+        wineboot_bin = (
+            Path(wine_cmd).parent / "wineboot"
+            if Path(wine_cmd).parent.name in ("bin", "files")
+            else "wineboot"
+        )
+        try:
+            init_env = dict(env)
+            init_env.pop("WINEDLLOVERRIDES", None)
+            wineboot_bin = Path(wine_cmd).parent / "wineboot"
+            if wineboot_bin.exists():
+                wineboot_cmd = [str(wineboot_bin), "-u"]
+            else:
+                # Los runners tipo Proton no traen binario wineboot propio
+                wineboot_cmd = [wine_cmd, "wineboot", "-u"]
+            subprocess.run(
+                wineboot_cmd,
+                env=init_env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=120,
+            )
+        except Exception as boot_err:
+            print(f"[Installer] Prefix wineboot initialization warning: {boot_err}")
 
     # Ensure Windows 10 mode in user.reg (prevent legacy winxp/win7 fallback locks)
     user_reg = prefix_path / "user.reg"
@@ -161,37 +350,20 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     system32.mkdir(parents=True, exist_ok=True)
     syswow64.mkdir(parents=True, exist_ok=True)
 
-    # Inject patched cmd.exe.so to resolve Wine cmd.exe move-overwrite prompt deadlock on FitGirl installers
-    cache_cmd = parent_launcher.db.base_dir / "cache" / "cmd.exe.so"
-    if not cache_cmd.exists():
-        cache_cmd.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            import urllib.request
 
-            urllib.request.urlretrieve(
-                "https://github.com/Francesco149/wine/releases/download/move-overwrite-fix-r2/cmd.exe.so",
-                str(cache_cmd),
-            )
-        except Exception:
-            pass
 
-    if cache_cmd.exists():
-        for target_sys in [system32, syswow64]:
-            if target_sys.exists():
-                try:
-                    shutil.copy2(cache_cmd, target_sys / "cmd.exe.so")
-                except Exception:
-                    pass
-
-    # Auto-inject installer helper DLLs (unarc, isdone, cls-*, atl*) directly into system32 / syswow64
+    # Auto-inject installer helper DLLs using proper architecture separation (32-bit to syswow64, 64-bit to system32)
     if setup_dir.exists():
         for dll_file in setup_dir.rglob("*.dll"):
             try:
-                shutil.copy2(dll_file, system32 / dll_file.name)
-                if syswow64.exists():
-                    shutil.copy2(dll_file, syswow64 / dll_file.name)
-                if windows_dir.exists():
-                    shutil.copy2(dll_file, windows_dir / dll_file.name)
+                arch = get_pe_arch(dll_file)
+                if arch == "x64":
+                    shutil.copy2(dll_file, system32 / dll_file.name)
+                else:
+                    if syswow64.exists():
+                        shutil.copy2(dll_file, syswow64 / dll_file.name)
+                    else:
+                        shutil.copy2(dll_file, system32 / dll_file.name)
             except Exception:
                 pass
 
@@ -216,58 +388,46 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     except Exception:
         pass
 
-    setup_dos_path = f"D:\\{setup_file.name}"
-    target_dir_arg = f"/DIR=C:\\Games\\{game_folder_name}"
+    setup_target = str(setup_file)
 
-    vd_enabled = (
-        bool(associated_game.get("virtual_desktop", False))
-        if associated_game
-        else False
+    vd_enabled = bool(
+        associated_game.get("virtual_desktop", False) if associated_game else False
     )
     vd_res = (
-        associated_game.get("virtual_desktop_res", "1920x1080")
+        associated_game.get("virtual_desktop_res", "800x600")
         if associated_game
-        else "1920x1080"
+        else "800x600"
     )
 
-    args = []
     if vd_enabled:
+        setup_win_target = f"D:\\{setup_file.name}"
         args = [
             "explorer",
             f"/desktop=Thatch,{vd_res}",
-            setup_dos_path,
-            target_dir_arg,
+            setup_win_target,
         ]
     else:
-        args = [setup_dos_path, target_dir_arg]
+        args = [
+            setup_target,
+        ]
 
-    # Force disable Esync and Fsync during setup execution to prevent cls-lolz thread deadlocks
-    env["WINEESYNC"] = "0"
-    env["WINEFSYNC"] = "0"
-    env["WINEMFSYNC"] = "0"
-
-    # Suppress cmd.exe move/copy overwrite confirmation prompts (prevent FitGirl batch script hangs)
-    env["COPYCMD"] = "/Y"
-    env["DIRCMD"] = "/O:N"
-
-    # Limit xtool and srep decompressor thread contention on Linux anonymous pipes (prevent 28-thread pipe deadlocks)
-    env["XTOOL_THREADS"] = "4"
-    env["SREP_THREADS"] = "4"
-
-    # Force disable Large Address Aware (LAA=0) during installer execution to cap memory allocations below 2GB
-    # This prevents 32-bit pointer overflow in unarc.dll / cls-lolz.dll regardless of installer options!
-    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "0"
-    env["WINE_LARGE_ADDRESS_AWARE"] = "0"
-    # Add temp directory to PATH for helper DLL resolution (cls-lolz, unarc)
-    user_temp = (
-        prefix_path / "drive_c" / "users" / "esfingex" / "AppData" / "Local" / "Temp"
-    )
+    # Dynamically resolve all temp directories under drive_c/users and drive_c/windows/temp
+    temp_dirs = [str(setup_dir)]
+    if prefix_path.exists():
+        users_dir = prefix_path / "drive_c" / "users"
+        if users_dir.exists():
+            for t_dir in users_dir.rglob("Temp"):
+                if t_dir.is_dir():
+                    temp_dirs.append(str(t_dir))
     win_temp = prefix_path / "drive_c" / "windows" / "temp"
-    env["PATH"] = (
-        f"{str(setup_dir)}:{str(user_temp)}:{str(win_temp)}:{env.get('PATH', '')}"
-    )
+    if win_temp.exists():
+        temp_dirs.append(str(win_temp))
 
-    dll_overrides = "mscoree=d;mshtml=d;atl100=n,b"
+    path_prefix = ":".join(temp_dirs)
+    env["PATH"] = f"{path_prefix}:{env.get('PATH', '')}"
+
+    # Enable native unarc.dll and ISDone.dll overrides so InnoSetup decompression procedures load without 'Could not call proc' error
+    dll_overrides = "unarc=n,b;isdone=n,b;mscoree=d;mshtml=d;atl100=n,b"
     if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
         env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
     else:
@@ -291,18 +451,55 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             q_env.insert(k, v)
         parent_launcher.installer_process.setProcessEnvironment(q_env)
 
+        # Boost CPU/IO priority and maintain missing aliases dynamically every 3 seconds while installer runs
+        parent_launcher._boost_timer = QTimer()
+        parent_launcher._boost_timer.setInterval(3000)
+        parent_launcher._boost_timer.timeout.connect(
+            lambda: _boost_process_priority(
+                parent_launcher.installer_process.processId(), pref_path
+            )
+        )
+        parent_launcher._boost_timer.start()
+
         def on_installer_finished(exit_code, exit_status, p=prefix_name):
+            if hasattr(parent_launcher, "_boost_timer") and parent_launcher._boost_timer:
+                try:
+                    parent_launcher._boost_timer.stop()
+                except Exception:
+                    pass
             if d_drive.is_symlink() or d_drive.exists():
                 try:
                     d_drive.unlink()
                 except Exception:
                     pass
-            show_post_installer_dialog(parent_launcher, p)
-            if getattr(parent_launcher, "is_installer_mode", False):
-                QApplication.quit()
+
+        # Terminate any lingering wineserver process from previous runner versions to prevent version mismatch crashes
+        import subprocess
+
+        try:
+            wineserver_bin = (
+                Path(wine_cmd).parent / "wineserver"
+                if Path(wine_cmd).parent.name in ("bin", "files")
+                else "wineserver"
+            )
+            subprocess.run(
+                [str(wineserver_bin), "-k"],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception:
+            pass
+
+        log_file_path = str(parent_launcher.db.user_data_dir / "installer_last_run.log")
+        parent_launcher.installer_process.setStandardOutputFile(log_file_path)
+        parent_launcher.installer_process.setStandardErrorFile(log_file_path)
 
         parent_launcher.installer_process.finished.connect(on_installer_finished)
         parent_launcher.installer_process.start(wine_cmd, args)
+
+        # Show live progress monitor dialog immediately so user sees real-time extracted MBs & progress
+        show_post_installer_dialog(parent_launcher, prefix_name)
 
         # Boost CPU and Disk I/O priority and fix missing decompressor aliases
         pref_path = parent_launcher.db.get_prefixes_dir() / prefix_name
@@ -319,68 +516,42 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             ),
         )
     except Exception as e:
+        parent_widget = parent_launcher if isinstance(parent_launcher, QWidget) else None
         QMessageBox.critical(
-            parent_launcher, "Error", f"Fallo al iniciar el instalador: {e}"
+            parent_widget, "Error", f"Fallo al iniciar el instalador: {e}"
         )
 
 
 def _boost_process_priority(pid: int, prefix_dir: Path | None = None) -> None:
-    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and fixes missing aliases."""
+    """Elevates CPU priority (renice -10) and Disk I/O priority (ionice RealTime) for installer processes and provides missing aliases."""
     import subprocess
 
-    # Replace 32-bit decompressors with 64-bit binaries to bypass 32-bit WoW64 assembly signal loops
     if prefix_dir and prefix_dir.exists():
         temp_base = prefix_dir / "drive_c" / "users"
         if temp_base.exists():
             for tmp_folder in temp_base.rglob("is-*.tmp"):
                 if tmp_folder.is_dir():
-                    magic_x64 = tmp_folder / "cls-magic2l_x64.exe"
-                    srep_x64 = tmp_folder / "cls-srep_x64.exe"
-                    lolly_x64 = tmp_folder / "cls-lollypop_x64.exe"
-
-                    if magic_x64.exists():
-                        for target_name in [
-                            "cls-magic2_x86.exe",
-                            "cls-magic2.exe",
-                            "cls-magic2l_x86.exe",
-                            "cls-lolzx_x64.exe",
-                            "cls-lolz_x64.exe",
-                            "cls-lolz_x86.exe",
-                            "cls-lolz.exe",
-                        ]:
-                            t = tmp_folder / target_name
-                            try:
-                                shutil.copy2(magic_x64, t)
-                            except Exception:
-                                pass
-
-                    if srep_x64.exists():
-                        for target_name in ["cls-srep_x86.exe", "cls-srep.exe"]:
-                            t = tmp_folder / target_name
-                            try:
-                                shutil.copy2(srep_x64, t)
-                            except Exception:
-                                pass
-
-                    if lolly_x64.exists():
-                        for target_name in ["cls-lollypop_x86.exe", "cls-lollypop.exe"]:
-                            t = tmp_folder / target_name
-                            try:
-                                shutil.copy2(lolly_x64, t)
-                            except Exception:
-                                pass
-
-                    arc_ini = tmp_folder / "arc.ini"
-                    if arc_ini.exists():
-                        try:
-                            txt = arc_ini.read_text(encoding="utf-8", errors="ignore")
-                            if "_x86.exe" in txt:
-                                arc_ini.write_text(
-                                    txt.replace("_x86.exe", "_x64.exe"),
-                                    encoding="utf-8",
-                                )
-                        except Exception:
-                            pass
+                    # Prefer 64-bit decompressors (x64) on 64-bit Wine to prevent 32-bit virtual memory address space exhaustion (unarc.dll error -12)
+                    alias_groups = [
+                        ("cls-magic2l_x64.exe", ["cls-magic2_x64.exe", "cls-magic2.exe"]),
+                        ("cls-lolz_x64.exe", ["cls-lolzx_x64.exe", "cls-lolz.exe"]),
+                        ("cls-srep_x64.exe", ["cls-srep.exe"]),
+                        ("cls-lollypop_x64.exe", ["cls-lollypop.exe"]),
+                        ("cls-magic2_x86.exe", ["cls-magic2.exe"]),
+                        ("cls-lolz_x86.exe", ["cls-lolz.exe"]),
+                        ("cls-srep_x86.exe", ["cls-srep.exe"]),
+                        ("cls-lollypop_x86.exe", ["cls-lollypop.exe"]),
+                    ]
+                    for source_file, targets in alias_groups:
+                        src = tmp_folder / source_file
+                        if src.exists():
+                            for target in targets:
+                                t = tmp_folder / target
+                                if not t.exists():
+                                    try:
+                                        shutil.copy2(src, t)
+                                    except Exception:
+                                        pass
 
     target_pids = set()
     if pid > 0:
@@ -445,16 +616,97 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
     layout.addWidget(lbl_title)
 
     lbl_msg = QLabel(
-        "El instalador está corriendo en segundo plano.\n"
-        "Cuando <b>termine la instalación</b>, haz clic en "
-        "<b>Vincular Ejecutable</b> para registrar el juego en la biblioteca "
-        "y crear su ícono de acceso directo."
+        "El instalador está corriendo en segundo plano.<br>"
+        "Calculando datos extraídos..."
     )
     lbl_msg.setTextFormat(Qt.RichText)
     lbl_msg.setWordWrap(True)
     lbl_msg.setAlignment(Qt.AlignCenter)
     lbl_msg.setStyleSheet("color: #a1a1aa; font-size: 13px; line-height: 1.5;")
     layout.addWidget(lbl_msg)
+
+    progress_bar = QProgressBar()
+    progress_bar.setRange(0, 0)
+    progress_bar.setStyleSheet("""
+        QProgressBar {
+            background-color: #1e1e2e;
+            border: 1px solid #313244;
+            border-radius: 6px;
+            height: 14px;
+            text-align: center;
+        }
+        QProgressBar::chunk {
+            background-color: #89b4fa;
+            border-radius: 5px;
+        }
+    """)
+    layout.addWidget(progress_bar)
+
+    games_dir = drive_c / "Games"
+    timer = QTimer(dialog)
+    timer.setInterval(1500)
+
+    def update_status():
+        import subprocess
+
+        is_running = False
+        if hasattr(parent_launcher, "installer_process") and parent_launcher.installer_process:
+            if parent_launcher.installer_process.state() == QProcess.Running:
+                is_running = True
+
+        if not is_running:
+            try:
+                out = subprocess.check_output(
+                    ["pgrep", "-i", "-f", "setup"], stderr=subprocess.DEVNULL
+                ).decode()
+                if out.strip():
+                    is_running = True
+            except Exception:
+                pass
+
+        total_bytes = 0
+        if games_dir.exists():
+            for p in games_dir.rglob("*"):
+                if p.is_file() and not p.is_symlink():
+                    try:
+                        total_bytes += p.stat().st_size
+                    except Exception:
+                        pass
+
+        total_mb = total_bytes / (1024 * 1024)
+        if is_running:
+            lbl_title.setText("⏳ Instalación en progreso...")
+            lbl_msg.setText(
+                f"El juego se está descomprimiendo en <b>drive_c/Games</b>.<br>"
+                f"📊 <b>Datos extraídos: {total_mb:.1f} MB</b><br>"
+                f"<span style='color: #71717a;'>Por favor espera a que finalice la descompresión.</span>"
+            )
+        else:
+            timer.stop()
+            progress_bar.setRange(0, 100)
+            progress_bar.setValue(100)
+            progress_bar.setStyleSheet("""
+                QProgressBar {
+                    background-color: #1e1e2e;
+                    border: 1px solid #313244;
+                    border-radius: 6px;
+                    height: 14px;
+                }
+                QProgressBar::chunk {
+                    background-color: #a6e3a1;
+                    border-radius: 5px;
+                }
+            """)
+            lbl_icon.setText("🎉")
+            lbl_title.setText("✅ ¡Instalación Completada!")
+            lbl_msg.setText(
+                f"<b>{total_mb:.1f} MB</b> extraídos con éxito.<br>"
+                f"Haz clic abajo en <b>Vincular Ejecutable</b> para registrar el juego en tu biblioteca."
+            )
+
+    timer.timeout.connect(update_status)
+    timer.start()
+    update_status()
 
     btn_link = QPushButton("🔗  Vincular Ejecutable del Juego")
     btn_link.setObjectName("BlueBtn")

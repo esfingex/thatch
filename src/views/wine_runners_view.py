@@ -224,7 +224,7 @@ class RunnerDownloadWorker(QThread):
                         tag_name = self.runner_id.replace(
                             "wine-ge-proton", "GE-Proton"
                         ).replace("wine-ge-", "GE-Proton")
-                        download_url = f"https://github.com/GloriousEggroll/wine-ge-custom/releases/download/{tag_name}/wine-lutris-{tag_name}-x86_64.tar.xz"
+                        download_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/{tag_name}/{tag_name}.tar.gz"
 
             if not download_url:
                 raise ValueError(
@@ -439,12 +439,11 @@ class WineRunnersView(QWidget):
             if r_id.startswith("ge-proton-custom-"):
                 folder_name = r_id.replace("ge-proton-custom-", "")
             elif "wine-ge" in r_id or "ge-proton" in r_id:
-                tag_part = (
-                    r_id.replace("wine-ge-", "")
-                    .replace("wine-", "")
-                    .replace("proton", "Proton")
+                folder_name = (
+                    r_id.replace("wine-ge-proton", "GE-Proton")
+                    .replace("wine-ge-", "GE-Proton")
+                    .replace("ge-proton-", "GE-Proton-")
                 )
-                folder_name = f"lutris-{tag_part}-x86_64"
             else:
                 folder_name = f"{r_id}-x86_64"
 
