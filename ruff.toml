@@ -1,0 +1,13 @@
+# Thatch — Ruff configuration
+# Pinned explicitly so CI behavior does not drift with ruff defaults.
+target-version = "py310"
+line-length = 100
+extend-exclude = ["runners", "prefixes", "venv", ".codewhale", ".planning"]
+
+[lint]
+select = [
+    "E4",   # pycodestyle imports / indentation
+    "E7",   # pycodestyle statements
+    "E9",   # pycodestyle runtime errors
+    "F",    # pyflakes
+]
