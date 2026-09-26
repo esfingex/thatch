@@ -21,6 +21,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt, Slot, QSize
 from pathlib import Path
 
+from i18n import _
+
 
 class ProgramRowWidget(QWidget):
     """Row widget for a program in the Installed Programs list.
@@ -69,7 +71,7 @@ class ProgramRowWidget(QWidget):
 
         if linked:
             # ▶ Ejecutar
-            self.btn_run = QPushButton("▶ Ejecutar")
+            self.btn_run = QPushButton(_("cdetails_program_btn_run"))
             self.btn_run.setObjectName("OrangeBtn")
             self.btn_run.setCursor(Qt.PointingHandCursor)
             self.btn_run.setStyleSheet(
@@ -79,7 +81,7 @@ class ProgramRowWidget(QWidget):
             layout.addWidget(self.btn_run)
 
             # 🔗 Eliminar Link
-            self.btn_unlink = QPushButton("🔗 Eliminar Link")
+            self.btn_unlink = QPushButton(_("cdetails_program_btn_unlink"))
             self.btn_unlink.setCursor(Qt.PointingHandCursor)
             self.btn_unlink.setStyleSheet(
                 "min-height: 22px; max-height: 22px; padding: 0px 10px; font-size: 11px; font-weight: bold; background-color: #202024; color: #f87171; border: 1px solid #3f3f46;"
@@ -88,7 +90,7 @@ class ProgramRowWidget(QWidget):
             layout.addWidget(self.btn_unlink)
 
             # Desinstalar
-            self.btn_delete = QPushButton("Desinstalar")
+            self.btn_delete = QPushButton(_("cdetails_program_btn_uninstall"))
             self.btn_delete.setObjectName("RedBtnText")
             self.btn_delete.setCursor(Qt.PointingHandCursor)
             self.btn_delete.setStyleSheet(
@@ -98,14 +100,14 @@ class ProgramRowWidget(QWidget):
             layout.addWidget(self.btn_delete)
         else:
             # Badge: detected
-            lbl_badge = QLabel("Detectado")
+            lbl_badge = QLabel(_("cdetails_program_detected"))
             lbl_badge.setStyleSheet(
                 "background: #1e3a5f; color: #60a5fa; border-radius: 4px; "
                 "padding: 2px 8px; font-size: 10px; font-weight: bold;"
             )
             layout.addWidget(lbl_badge)
 
-            self.btn_link = QPushButton("🔗 Vincular")
+            self.btn_link = QPushButton(_("cdetails_program_btn_link"))
             self.btn_link.setObjectName("BlueBtn")
             self.btn_link.setCursor(Qt.PointingHandCursor)
             self.btn_link.setStyleSheet(
@@ -164,7 +166,7 @@ class ChestDetailsView(QWidget):
         # 1. Header Row
         header_layout = QHBoxLayout()
 
-        self.btn_back = QPushButton("← Back")
+        self.btn_back = QPushButton(_("cdetails_btn_back"))
         self.btn_back.setStyleSheet(
             "background-color: transparent; border: none; color: #a1a1aa; font-weight: bold; font-size: 14px;"
         )
@@ -177,28 +179,28 @@ class ChestDetailsView(QWidget):
         self.lbl_icon.setStyleSheet("font-size: 24px;")
         header_layout.addWidget(self.lbl_icon)
 
-        self.lbl_title = QLabel("Chest Name")
+        self.lbl_title = QLabel(_("cdetails_title_placeholder"))
         self.lbl_title.setObjectName("ViewTitle")
         header_layout.addWidget(self.lbl_title, stretch=1)
 
         # Action Buttons (Top-Right)
-        self.btn_run = QPushButton("▶ Run")
+        self.btn_run = QPushButton(_("cdetails_btn_run"))
         self.btn_run.setObjectName("OrangeBtn")
         self.btn_run.setCursor(Qt.PointingHandCursor)
         self.btn_run.clicked.connect(lambda: self.run_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_run)
 
-        self.btn_browse = QPushButton("📁 Browse")
+        self.btn_browse = QPushButton(_("cdetails_btn_browse"))
         self.btn_browse.setCursor(Qt.PointingHandCursor)
         self.btn_browse.clicked.connect(lambda: self.browse_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_browse)
 
-        self.btn_terminal = QPushButton("💻 Terminal")
+        self.btn_terminal = QPushButton(_("cdetails_btn_terminal"))
         self.btn_terminal.setCursor(Qt.PointingHandCursor)
         self.btn_terminal.clicked.connect(lambda: self.terminal_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_terminal)
 
-        self.btn_rename = QPushButton("✏️  Renombrar")
+        self.btn_rename = QPushButton(_("cdetails_btn_rename"))
         self.btn_rename.setCursor(Qt.PointingHandCursor)
         self.btn_rename.clicked.connect(lambda: self.rename_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_rename)
@@ -217,7 +219,7 @@ class ChestDetailsView(QWidget):
         tab_layout.setAlignment(Qt.AlignLeft)
 
         self.tabs_group = []
-        self.tab_details = QPushButton("Details")
+        self.tab_details = QPushButton(_("cdetails_tab_details"))
         self.tab_details.setObjectName("TabBtn")
         self.tab_details.setCheckable(True)
         self.tab_details.setChecked(True)
@@ -225,21 +227,21 @@ class ChestDetailsView(QWidget):
         tab_layout.addWidget(self.tab_details)
         self.tabs_group.append(self.tab_details)
 
-        self.tab_programs = QPushButton("Programs")
+        self.tab_programs = QPushButton(_("cdetails_tab_programs"))
         self.tab_programs.setObjectName("TabBtn")
         self.tab_programs.setCheckable(True)
         self.tab_programs.clicked.connect(lambda: self._switch_tab(1))
         tab_layout.addWidget(self.tab_programs)
         self.tabs_group.append(self.tab_programs)
 
-        self.tab_dependencies = QPushButton("Dependencies")
+        self.tab_dependencies = QPushButton(_("cdetails_tab_dependencies"))
         self.tab_dependencies.setObjectName("TabBtn")
         self.tab_dependencies.setCheckable(True)
         self.tab_dependencies.clicked.connect(lambda: self._switch_tab(2))
         tab_layout.addWidget(self.tab_dependencies)
         self.tabs_group.append(self.tab_dependencies)
 
-        self.tab_settings = QPushButton("Settings")
+        self.tab_settings = QPushButton(_("cdetails_tab_settings"))
         self.tab_settings.setObjectName("TabBtn")
         self.tab_settings.setCheckable(True)
         self.tab_settings.clicked.connect(lambda: self._switch_tab(3))
@@ -281,7 +283,7 @@ class ChestDetailsView(QWidget):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        title = QLabel("Information")
+        title = QLabel(_("cdetails_title_information"))
         title.setObjectName("CardTitle")
         layout.addWidget(title)
 
@@ -290,12 +292,12 @@ class ChestDetailsView(QWidget):
 
         # Metadata values
         labels = [
-            "Environment:",
-            "Runner:",
-            "Architecture:",
-            "State:",
-            "Path:",
-            "Hardware GPU:",
+            _("card_label_environment"),
+            _("card_label_runner"),
+            _("card_label_architecture"),
+            _("cdetails_lbl_state"),
+            _("cdetails_lbl_path"),
+            _("cdetails_lbl_gpu"),
         ]
         self.detail_vals = []
 
@@ -323,17 +325,17 @@ class ChestDetailsView(QWidget):
 
         # Header Row inside Card
         header = QHBoxLayout()
-        title = QLabel("Installed Programs")
+        title = QLabel(_("cdetails_title_programs"))
         title.setObjectName("CardTitle")
         header.addWidget(title)
 
-        self.btn_add_program = QPushButton("Vincular ejecutable")
+        self.btn_add_program = QPushButton(_("cdetails_btn_link_exe"))
         self.btn_add_program.setCursor(Qt.PointingHandCursor)
         self.btn_add_program.clicked.connect(
             lambda: self.add_program_requested.emit(self.prefix_name)
         )
 
-        self.btn_run_installer = QPushButton("💿 Ejecutar Instalador (.exe)")
+        self.btn_run_installer = QPushButton(_("cdetails_btn_run_installer"))
         self.btn_run_installer.setObjectName("BlueBtn")
         self.btn_run_installer.setCursor(Qt.PointingHandCursor)
         self.btn_run_installer.clicked.connect(self._on_run_installer_clicked)
@@ -357,18 +359,20 @@ class ChestDetailsView(QWidget):
 
         # Header Row inside Card
         header = QHBoxLayout()
-        title = QLabel("Chest Dependencies")
+        title = QLabel(_("cdetails_title_dependencies"))
         title.setObjectName("CardTitle")
         header.addWidget(title)
         layout.addLayout(header)
 
-        subtitle = QLabel("Windows components instalados en este WINEPREFIX via Winetricks")
+        subtitle = QLabel(_("cdetails_deps_subtitle"))
         subtitle.setStyleSheet("color: #71717a; font-size: 13px; margin-bottom: 4px;")
         layout.addWidget(subtitle)
 
         # ── Search box ─────────────────────────────────────────────────────────
         self.dep_search = QLineEdit()
-        self.dep_search.setPlaceholderText("🔍  Buscar componente... (e.g. dxvk, vcrun, dotnet)")
+        self.dep_search.setPlaceholderText(
+            _("cdetails_deps_search_placeholder")
+        )
         self.dep_search.setStyleSheet(
             "QLineEdit { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; "
             "color: #ffffff; padding: 8px 14px; font-size: 13px; } "
@@ -383,9 +387,17 @@ class ChestDetailsView(QWidget):
         filter_layout.setAlignment(Qt.AlignLeft)
 
         self.dep_filter_group = []
-        categories = ["All", "Libraries", "Fonts", "Settings"]
-        for cat in categories:
-            btn = QPushButton(cat)
+        # Category values are data sentinels compared against dep["type"] in
+        # winetricks catalog entries; only the button labels are translated.
+        self.dep_categories = ["All", "Libraries", "Fonts", "Settings"]
+        cat_labels = {
+            "All": _("cdetails_cat_all"),
+            "Libraries": _("cdetails_cat_libraries"),
+            "Fonts": _("cdetails_cat_fonts"),
+            "Settings": _("cdetails_cat_settings"),
+        }
+        for cat in self.dep_categories:
+            btn = QPushButton(cat_labels[cat])
             btn.setObjectName("TabBtn")
             btn.setCheckable(True)
             btn.setChecked(cat == "All")
@@ -415,8 +427,8 @@ class ChestDetailsView(QWidget):
 
     def _on_dep_filter_changed(self, category_name: str) -> None:
         self.active_dep_category = category_name
-        for btn in self.dep_filter_group:
-            btn.setChecked(btn.text() == category_name)
+        for idx, btn in enumerate(self.dep_filter_group):
+            btn.setChecked(self.dep_categories[idx] == category_name)
         self._populate_dependencies()
 
     def _build_settings_tab(self) -> QWidget:
@@ -426,14 +438,14 @@ class ChestDetailsView(QWidget):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
 
-        title = QLabel("Chest Settings")
+        title = QLabel(_("cdetails_title_settings"))
         title.setObjectName("CardTitle")
         layout.addWidget(title)
 
         grid = QGridLayout()
         grid.setSpacing(14)
 
-        lbl_runner = QLabel("Override Runner:")
+        lbl_runner = QLabel(_("cdetails_lbl_override_runner"))
         lbl_runner.setObjectName("CardLabel")
         self.combo_runner_override = QComboBox()
         self.combo_runner_override.currentTextChanged.connect(self._on_runner_changed)
@@ -441,44 +453,38 @@ class ChestDetailsView(QWidget):
         grid.addWidget(self.combo_runner_override, 0, 1)
 
         # Direct Performance controls
-        lbl_perf = QLabel("Performance Hacks:")
+        lbl_perf = QLabel(_("cdetails_lbl_perf"))
         lbl_perf.setObjectName("CardLabel")
         grid.addWidget(lbl_perf, 1, 0)
 
         perf_layout = QVBoxLayout()
 
-        self.chk_esync = QCheckBox("Enable Esync (Eventfd Synchronization)")
+        self.chk_esync = QCheckBox(_("cdetails_chk_esync"))
         self.chk_esync.setChecked(True)
         self.chk_esync.stateChanged.connect(self._on_perf_settings_changed)
 
-        self.lbl_esync_desc = QLabel(
-            "Esync reduces Wineserver overhead using eventfd thread synchronization. Ideal for modern multi-threaded games."
-        )
+        self.lbl_esync_desc = QLabel(_("cdetails_desc_esync"))
         self.lbl_esync_desc.setStyleSheet(
             "color: #71717a; font-size: 11px; margin-left: 20px; margin-bottom: 8px;"
         )
         self.lbl_esync_desc.setWordWrap(True)
 
-        self.chk_fsync = QCheckBox("Enable Fsync (Futex Synchronization)")
+        self.chk_fsync = QCheckBox(_("cdetails_chk_fsync"))
         self.chk_fsync.setChecked(True)
         self.chk_fsync.stateChanged.connect(self._on_perf_settings_changed)
 
-        self.lbl_fsync_desc = QLabel(
-            "Fsync leverages kernel futexes directly (requires a compatible Linux kernel, like Zen, XanMod, or CachyOS). Offers even higher FPS."
-        )
+        self.lbl_fsync_desc = QLabel(_("cdetails_desc_fsync"))
         self.lbl_fsync_desc.setStyleSheet(
             "color: #71717a; font-size: 11px; margin-left: 20px; margin-bottom: 8px;"
         )
         self.lbl_fsync_desc.setWordWrap(True)
 
-        self.chk_sandbox = QCheckBox("Enable Sandbox Isolation (Secure Laboratory)")
+        self.chk_sandbox = QCheckBox(_("cdetails_chk_sandbox"))
         self.chk_sandbox.setChecked(False)
         self.chk_sandbox.setStyleSheet("color: #60a5fa; font-weight: bold;")
         self.chk_sandbox.stateChanged.connect(self._on_perf_settings_changed)
 
-        self.lbl_sandbox_desc = QLabel(
-            "Locks down WINEPREFIX folders, unlinks /home directory access, and disables root disk mapping for secure installations."
-        )
+        self.lbl_sandbox_desc = QLabel(_("cdetails_desc_sandbox"))
         self.lbl_sandbox_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-left: 20px;")
         self.lbl_sandbox_desc.setWordWrap(True)
 
@@ -502,7 +508,7 @@ class ChestDetailsView(QWidget):
         layout.addWidget(sep)
 
         # ── Display & Scaling Section ───────────────────────────────────────────
-        lbl_display_section = QLabel("Display & Scaling")
+        lbl_display_section = QLabel(_("cdetails_title_display"))
         lbl_display_section.setStyleSheet(
             "font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 2px;"
         )
@@ -512,7 +518,7 @@ class ChestDetailsView(QWidget):
         disp_grid.setSpacing(14)
 
         # ── DPI Scale ──
-        lbl_dpi = QLabel("Escalado DPI:")
+        lbl_dpi = QLabel(_("cdetails_lbl_dpi"))
         lbl_dpi.setObjectName("CardLabel")
         disp_grid.addWidget(lbl_dpi, 0, 0)
 
@@ -522,10 +528,10 @@ class ChestDetailsView(QWidget):
         self.combo_dpi_scale = QComboBox()
         self.combo_dpi_scale.addItems(
             [
-                "96 DPI  —  100%  (predeterminado)",
-                "120 DPI  —  125%  (recomendado para GOG)",
-                "144 DPI  —  150%",
-                "192 DPI  —  200%",
+                _("cdetails_dpi_96"),
+                _("cdetails_dpi_120"),
+                _("cdetails_dpi_144"),
+                _("cdetails_dpi_192"),
             ]
         )
         self.combo_dpi_scale.currentIndexChanged.connect(self._on_dpi_scale_changed)
@@ -533,29 +539,23 @@ class ChestDetailsView(QWidget):
         dpi_row.addStretch(1)
         dpi_right.addLayout(dpi_row)
 
-        lbl_dpi_desc = QLabel(
-            "Ajusta la escala de la interfaz de Windows dentro de Wine. "
-            "Útil para instaladores GOG o aplicaciones que se ven muy pequeñas en pantalla 1080p."
-        )
+        lbl_dpi_desc = QLabel(_("cdetails_desc_dpi"))
         lbl_dpi_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-top: 2px;")
         lbl_dpi_desc.setWordWrap(True)
         dpi_right.addWidget(lbl_dpi_desc)
         disp_grid.addLayout(dpi_right, 0, 1)
 
         # ── Virtual Desktop ──
-        lbl_vd = QLabel("Escritorio Virtual:")
+        lbl_vd = QLabel(_("cdetails_lbl_vd"))
         lbl_vd.setObjectName("CardLabel")
         disp_grid.addWidget(lbl_vd, 1, 0)
 
         vd_right = QVBoxLayout()
 
-        self.chk_virtual_desktop = QCheckBox("Forzar escritorio virtual de Wine")
+        self.chk_virtual_desktop = QCheckBox(_("cdetails_chk_vd"))
         self.chk_virtual_desktop.stateChanged.connect(self._on_virtual_desktop_toggled)
 
-        self.lbl_vd_desc = QLabel(
-            "Crea un canvas aislado a la resolución elegida. El instalador y el juego "
-            "corren completamente dentro de ese canvas. Alternativa al escalado DPI."
-        )
+        self.lbl_vd_desc = QLabel(_("cdetails_desc_vd"))
         self.lbl_vd_desc.setStyleSheet(
             "color: #71717a; font-size: 11px; margin-left: 20px; margin-top: 2px;"
         )
@@ -565,7 +565,7 @@ class ChestDetailsView(QWidget):
         vd_right.addWidget(self.lbl_vd_desc)
 
         res_row = QHBoxLayout()
-        self.lbl_vd_res = QLabel("Resolución:")
+        self.lbl_vd_res = QLabel(_("cdetails_lbl_resolution"))
         self.lbl_vd_res.setStyleSheet("color: #a1a1aa; font-size: 12px; margin-left: 20px;")
         self.combo_vd_resolution = QComboBox()
         self.combo_vd_resolution.addItems(
@@ -583,7 +583,7 @@ class ChestDetailsView(QWidget):
         disp_grid.addLayout(vd_right, 1, 1)
 
         # ── Target Monitor ──
-        lbl_monitor = QLabel("Pantalla de Lanzamiento:")
+        lbl_monitor = QLabel(_("cdetails_lbl_monitor"))
         lbl_monitor.setObjectName("CardLabel")
         disp_grid.addWidget(lbl_monitor, 2, 0)
 
@@ -595,10 +595,7 @@ class ChestDetailsView(QWidget):
         monitor_row.addStretch(1)
         monitor_right.addLayout(monitor_row)
 
-        lbl_monitor_desc = QLabel(
-            "Selecciona en qué monitor/pantalla debe abrirse el juego. "
-            "Forzará temporalmente el monitor principal al iniciar el juego."
-        )
+        lbl_monitor_desc = QLabel(_("cdetails_desc_monitor"))
         lbl_monitor_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-top: 2px;")
         lbl_monitor_desc.setWordWrap(True)
         monitor_right.addWidget(lbl_monitor_desc)
@@ -619,26 +616,19 @@ class ChestDetailsView(QWidget):
         layout.addWidget(sep_drives)
 
         # ── Drives Manager Layout ──
-        lbl_drives_section = QLabel("Unidades Virtuales (Sandbox / Mapeos)")
+        lbl_drives_section = QLabel(_("cdetails_title_drives"))
         lbl_drives_section.setStyleSheet(
             "font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 2px;"
         )
         layout.addWidget(lbl_drives_section)
 
-        self.lbl_drives_desc = QLabel(
-            "Asigna letras de unidad adicionales (como D:, E:, Y:) que apunten a carpetas específicas de tu sistema. "
-            "Wine podrá ver e interactuar SOLAMENTE con esas carpetas, manteniendo a salvo todo lo demás en modo sandbox."
-        )
+        self.lbl_drives_desc = QLabel(_("cdetails_desc_drives"))
         self.lbl_drives_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-bottom: 8px;")
         self.lbl_drives_desc.setWordWrap(True)
         layout.addWidget(self.lbl_drives_desc)
 
         # Sandbox disabled warning notice widget
-        self.lbl_drives_sandbox_disabled = QLabel(
-            "🔓 <b>El Aislamiento de Seguridad (Sandbox) está Desactivado.</b><br>"
-            "Este contenedor tiene acceso directo y completo a todo tu disco duro a través de la Unidad Z: predeterminada. "
-            "Por seguridad, la configuración de mapeos de unidad adicionales está deshabilitada ya que es innecesaria."
-        )
+        self.lbl_drives_sandbox_disabled = QLabel(_("cdetails_warn_sandbox_disabled"))
         self.lbl_drives_sandbox_disabled.setStyleSheet(
             "background-color: #1a1a1e; border: 1px solid #ff9f0a; border-radius: 6px; "
             "color: #ff9f0a; font-size: 12px; padding: 12px; margin-bottom: 6px;"
@@ -658,7 +648,7 @@ class ChestDetailsView(QWidget):
         layout.addWidget(self.drives_container)
 
         drives_btn_row = QHBoxLayout()
-        self.btn_add_drive = QPushButton("➕ Agregar Mapeo de Unidad")
+        self.btn_add_drive = QPushButton(_("cdetails_btn_add_drive"))
         self.btn_add_drive.setCursor(Qt.PointingHandCursor)
         self.btn_add_drive.setStyleSheet("font-weight: bold; max-width: 250px;")
         self.btn_add_drive.clicked.connect(self._on_add_drive_clicked)
@@ -702,7 +692,7 @@ class ChestDetailsView(QWidget):
 
         # 1. Update basic information details
         # Find environment from associated games
-        environment = "Custom"
+        environment = _("card_env_custom")
         runner = "Wine (Sistema)"
         self.current_recipe_id = "default_gaming"
 
@@ -730,9 +720,9 @@ class ChestDetailsView(QWidget):
         if prefix_path.exists() and not syswow_dir.exists():
             arch = "win32"
 
-        status = "Ready"
+        status = _("cdetails_status_ready")
         if "dev" in prefix_name.lower() or "test" in prefix_name.lower():
-            status = "Stopped"
+            status = _("cdetails_status_stopped")
 
         # Set icon
         if "gaming" in environment.lower() or associated_game:
@@ -817,7 +807,7 @@ class ChestDetailsView(QWidget):
         if self.list_programs.count() == 0:
             item = QListWidgetItem(self.list_programs)
             lbl_empty = QLabel(
-                "Ningún programa instalado detectado.\nUsa ‘💿 Ejecutar Instalador’ para instalar un juego."
+                _("cdetails_programs_empty")
             )
             lbl_empty.setStyleSheet(
                 "color: #52525b; font-size: 12px; font-style: italic; padding: 24px;"
@@ -892,7 +882,7 @@ class ChestDetailsView(QWidget):
         # Load monitor override from associated game record
         self.combo_monitor.blockSignals(True)
         self.combo_monitor.clear()
-        self.combo_monitor.addItem("Por defecto (Principal de X11)", "default")
+        self.combo_monitor.addItem(_("cdetails_monitor_default"), "default")
 
         # Get dynamic screens using xrandr
         import subprocess
@@ -909,7 +899,7 @@ class ChestDetailsView(QWidget):
             pass
 
         for mon in connected_monitors:
-            self.combo_monitor.addItem(f"Pantalla: {mon}", mon)
+            self.combo_monitor.addItem(_("main_monitor_label", monitor_name=mon), mon)
 
         # Select current monitor
         cur_monitor = (
@@ -968,10 +958,12 @@ class ChestDetailsView(QWidget):
             import shutil
 
             if not shutil.which("winetricks"):
-                msg = "⚠️ Winetricks no está instalado o no se encuentra en el PATH.\nPor favor, instala 'winetricks' en tu sistema para gestionar las dependencias."
+                msg = _("cdetails_deps_no_winetricks")
                 color = "#f87171"
             else:
-                msg = f"No active Winetricks packages found in '{self.active_dep_category}'"
+                msg = _(
+                    "cdetails_deps_empty_category", category=self.active_dep_category
+                )
                 color = "#71717a"
 
             lbl_empty = QLabel(msg)
@@ -1011,11 +1003,11 @@ class ChestDetailsView(QWidget):
                 is_installed = verb in self.installed_verbs
 
                 if is_installed:
-                    lbl_status = QLabel("✓ Installed")
+                    lbl_status = QLabel(_("cdetails_dep_installed"))
                     lbl_status.setObjectName("BadgeReady")
                     top_layout.addWidget(lbl_status)
 
-                    btn_action = QPushButton("Remove")
+                    btn_action = QPushButton(_("cdetails_dep_remove"))
                     btn_action.setObjectName("RedBtnText")
                     btn_action.setCursor(Qt.PointingHandCursor)
                     btn_action.setStyleSheet(
@@ -1028,7 +1020,7 @@ class ChestDetailsView(QWidget):
                     )
                     top_layout.addWidget(btn_action)
                 else:
-                    btn_action = QPushButton("Install")
+                    btn_action = QPushButton(_("cdetails_dep_install"))
                     btn_action.setObjectName("BlueBtn")
                     btn_action.setCursor(Qt.PointingHandCursor)
                     btn_action.setStyleSheet(
@@ -1055,8 +1047,9 @@ class ChestDetailsView(QWidget):
 
     @Slot()
     def _on_run_installer_clicked(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select Windows Installer (.exe)", "", "Executables (*.exe)"
+        exe_filter = _("cdetails_filter_exe")
+        path, _unused = QFileDialog.getOpenFileName(
+            self, _("cdetails_select_installer_title"), "", exe_filter
         )
         if path:
             self.run_installer_requested.emit(self.prefix_name, path)
@@ -1115,7 +1108,7 @@ class ChestDetailsView(QWidget):
         dosdevices_path = prefix_path / "dosdevices"
 
         if not dosdevices_path.exists():
-            lbl_no_devices = QLabel("No se detectó el directorio de dispositivos de Wine.")
+            lbl_no_devices = QLabel(_("cdetails_drives_not_found"))
             lbl_no_devices.setStyleSheet("color: #71717a; font-style: italic; font-size: 12px;")
             self.drives_layout.addWidget(lbl_no_devices)
             return
@@ -1125,7 +1118,7 @@ class ChestDetailsView(QWidget):
             for item in dosdevices_path.iterdir():
                 if item.name.endswith(":"):
                     letter = item.name[:-1].upper()
-                    target = "Desconocido"
+                    target = _("cdetails_drive_unknown")
                     try:
                         if item.is_symlink():
                             target = str(item.readlink())
@@ -1152,7 +1145,7 @@ class ChestDetailsView(QWidget):
 
             # Icon + Letter
             icon = "💽" if letter == "C" else "📁"
-            lbl_letter = QLabel(f"{icon}  <b>Unidad {letter}:</b>")
+            lbl_letter = QLabel(_("cdetails_drive_label", icon=icon, letter=letter))
             lbl_letter.setStyleSheet(
                 "color: #ffffff; font-size: 13px; font-weight: bold; background: transparent; border: none;"
             )
@@ -1175,7 +1168,7 @@ class ChestDetailsView(QWidget):
 
             # Action button
             if letter != "C":
-                btn_del = QPushButton("Desmontar")
+                btn_del = QPushButton(_("cdetails_btn_unmount_drive"))
                 btn_del.setCursor(Qt.PointingHandCursor)
                 btn_del.setStyleSheet(
                     "background-color: transparent; border: 1px solid #ff453a; border-radius: 4px; "
@@ -1186,7 +1179,7 @@ class ChestDetailsView(QWidget):
                 )
                 row_layout.addWidget(btn_del)
             else:
-                lbl_system = QLabel("Sistema")
+                lbl_system = QLabel(_("cdetails_drive_system"))
                 lbl_system.setStyleSheet(
                     "color: #30d158; font-size: 11px; font-weight: bold; background: transparent; border: none; padding-right: 8px;"
                 )
@@ -1198,8 +1191,8 @@ class ChestDetailsView(QWidget):
         """Prompts user to select drive letter and directory, creating the symlink in WINEPREFIX."""
         letter, ok = QInputDialog.getText(
             self,
-            "Agregar Unidad Virtual",
-            "Especifica la letra para la unidad (ej: D, E, Y):",
+            _("cdetails_add_drive_title"),
+            _("cdetails_add_drive_prompt"),
         )
         if not (ok and letter.strip()):
             return
@@ -1208,21 +1201,21 @@ class ChestDetailsView(QWidget):
         if len(letter) != 1 or not letter.isalpha():
             QMessageBox.warning(
                 self,
-                "Letra Inválida",
-                "Por favor ingresa una sola letra del alfabeto (A-Z).",
+                _("cdetails_invalid_letter_title"),
+                _("cdetails_invalid_letter_msg"),
             )
             return
 
         if letter == "c":
             QMessageBox.warning(
                 self,
-                "Acceso Denegado",
-                "La unidad C ya está reservada para el sistema estándar de Wine.",
+                _("cdetails_drive_c_denied_title"),
+                _("cdetails_drive_c_denied_msg"),
             )
             return
 
         target_dir = QFileDialog.getExistingDirectory(
-            self, "Seleccionar carpeta para montar como unidad"
+            self, _("cdetails_select_mount_folder")
         )
         if not target_dir:
             return
@@ -1242,18 +1235,22 @@ class ChestDetailsView(QWidget):
             self.update_drives_list()
             QMessageBox.information(
                 self,
-                "Éxito",
-                f"¡Unidad {letter.upper()}: enlazada con éxito a {target_dir}!",
+                _("zeus_success_title"),
+                _("cdetails_drive_linked_msg", letter=letter.upper(), target=target_dir),
             )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo crear la unidad virtual: {e}")
+            QMessageBox.critical(
+                self,
+                _("main_error_title"),
+                _("cdetails_drive_error_msg", error=e),
+            )
 
     def _on_delete_drive_clicked(self, letter: str) -> None:
         """Removes a virtual drive mapping symlink."""
         res = QMessageBox.question(
             self,
-            "Desmontar Unidad",
-            f"¿Seguro que deseas desmontar la Unidad {letter}:?\nWine ya no podrá acceder a esta carpeta.",
+            _("cdetails_unmount_title"),
+            _("cdetails_unmount_confirm_msg", letter=letter),
             QMessageBox.Yes | QMessageBox.No,
         )
         if res == QMessageBox.Yes:

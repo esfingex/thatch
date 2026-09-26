@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Slot, Signal
 
+from i18n import _
+
 
 class LibrarySidebar(QWidget):
     """
@@ -40,14 +42,14 @@ class LibrarySidebar(QWidget):
         switcher_layout = QHBoxLayout()
         switcher_layout.setSpacing(6)
 
-        self.btn_view_games = QPushButton("🎮 Juegos")
+        self.btn_view_games = QPushButton(_("library_btn_games"))
         self.btn_view_games.setStyleSheet(
             "background-color: #1e291e; color: #00e676; border: 1px solid #00e676; font-weight: bold;"
         )
         self.btn_view_games.clicked.connect(self._on_switch_to_games)
         switcher_layout.addWidget(self.btn_view_games, stretch=1)
 
-        self.btn_view_envs = QPushButton("📦 Entornos")
+        self.btn_view_envs = QPushButton(_("library_btn_envs"))
         self.btn_view_envs.setStyleSheet(
             "background-color: #202024; color: #a1a1aa; border: 1px solid #2d2d34;"
         )
@@ -63,14 +65,14 @@ class LibrarySidebar(QWidget):
 
         # Generic Actions (Add / Remove)
         action_btn_layout = QHBoxLayout()
-        self.btn_add = QPushButton("Reclutar Juego")
+        self.btn_add = QPushButton(_("library_btn_add_game"))
         self.btn_add.setStyleSheet(
             "background-color: #202024; color: #00e676; border: 1px solid #2d2d34;"
         )
         self.btn_add.clicked.connect(self._on_add_clicked)
         action_btn_layout.addWidget(self.btn_add)
 
-        self.btn_remove = QPushButton("Borrar")
+        self.btn_remove = QPushButton(_("library_btn_delete"))
         self.btn_remove.setStyleSheet("color: #ff1744; border: 1px solid #2d2d34;")
         self.btn_remove.clicked.connect(self._on_remove_clicked)
         action_btn_layout.addWidget(self.btn_remove)
@@ -78,12 +80,12 @@ class LibrarySidebar(QWidget):
 
         # Bottom tools (Zeus Installer & Settings)
         bottom_lay = QHBoxLayout()
-        self.btn_zeus = QPushButton("Instalador Zeus")
+        self.btn_zeus = QPushButton(_("library_btn_zeus"))
         self.btn_zeus.setStyleSheet("color: #00e5ff; border: 1px solid #282830;")
         self.btn_zeus.clicked.connect(self.zeus_requested.emit)
         bottom_lay.addWidget(self.btn_zeus)
 
-        self.btn_settings = QPushButton("Ajustes")
+        self.btn_settings = QPushButton(_("library_btn_settings"))
         self.btn_settings.clicked.connect(self.settings_requested.emit)
         bottom_lay.addWidget(self.btn_settings)
         layout.addLayout(bottom_lay)
@@ -97,8 +99,8 @@ class LibrarySidebar(QWidget):
         self.btn_view_envs.setStyleSheet(
             "background-color: #202024; color: #a1a1aa; border: 1px solid #2d2d34;"
         )
-        self.btn_add.setText("Reclutar Juego")
-        self.btn_remove.setText("Borrar Juego")
+        self.btn_add.setText(_("library_btn_add_game"))
+        self.btn_remove.setText(_("library_btn_delete_game"))
         self.btn_zeus.show()
         self.selection_changed.emit("", "games")
 
@@ -111,8 +113,8 @@ class LibrarySidebar(QWidget):
         self.btn_view_games.setStyleSheet(
             "background-color: #202024; color: #a1a1aa; border: 1px solid #2d2d34;"
         )
-        self.btn_add.setText("Crear Entorno")
-        self.btn_remove.setText("Borrar Entorno")
+        self.btn_add.setText(_("library_btn_create_env"))
+        self.btn_remove.setText(_("library_btn_delete_env"))
         self.btn_zeus.hide()
         self.selection_changed.emit("", "envs")
 

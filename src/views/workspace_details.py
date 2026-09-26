@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Slot, Signal, Qt
 
 from .diagnostic_log import DiagnosticLogCard
+from i18n import _
 
 
 class WorkspaceDetails(QWidget):
@@ -43,26 +44,26 @@ class WorkspaceDetails(QWidget):
         self.header_card.setObjectName("CardFrame")
         h_layout = QVBoxLayout(self.header_card)
 
-        self.lbl_game_title = QLabel("Ningún juego seleccionado")
+        self.lbl_game_title = QLabel(_("workspace_no_game_selected"))
         self.lbl_game_title.setObjectName("HeaderTitle")
         h_layout.addWidget(self.lbl_game_title)
 
-        self.lbl_recipe_badge = QLabel("Receta: Ninguna")
+        self.lbl_recipe_badge = QLabel(_("workspace_recipe_none"))
         self.lbl_recipe_badge.setObjectName("Badge")
         self.lbl_recipe_badge.setAlignment(Qt.AlignLeft)
         h_layout.addWidget(self.lbl_recipe_badge)
 
-        self.lbl_gpu_info = QLabel(f"Hardware: GPU {self.active_gpu.upper()}")
+        self.lbl_gpu_info = QLabel(_("workspace_lbl_gpu", gpu=self.active_gpu.upper()))
         self.lbl_gpu_info.setStyleSheet("color: #a1a1aa; font-size: 11px;")
         h_layout.addWidget(self.lbl_gpu_info)
 
-        self.lbl_env_status = QLabel("Estado: Ningún juego seleccionado")
+        self.lbl_env_status = QLabel(_("workspace_status_no_game"))
         self.lbl_env_status.setStyleSheet(
             "font-size: 11px; font-weight: bold; color: #a1a1aa; padding: 2px 0px;"
         )
         h_layout.addWidget(self.lbl_env_status)
 
-        self.btn_auto_inject = QPushButton("⚡ Instalar dependencias de receta")
+        self.btn_auto_inject = QPushButton(_("workspace_btn_auto_inject"))
         self.btn_auto_inject.setStyleSheet(
             "background-color: #202024; color: #ffb300; border: 1px solid #ffb300; font-weight: bold; padding: 6px;"
         )
@@ -74,12 +75,12 @@ class WorkspaceDetails(QWidget):
         play_btn_layout = QHBoxLayout()
         play_btn_layout.setSpacing(6)
 
-        self.btn_play = QPushButton("🔥 ¡AL ABORDAJE! (Lanzar)")
+        self.btn_play = QPushButton(_("workspace_btn_play"))
         self.btn_play.setObjectName("PlayButton")
         self.btn_play.clicked.connect(self._on_play_clicked)
         play_btn_layout.addWidget(self.btn_play, stretch=3)
 
-        self.btn_secondary_action = QPushButton("✏️ Renombrar Entorno")
+        self.btn_secondary_action = QPushButton(_("workspace_btn_rename_env"))
         self.btn_secondary_action.setStyleSheet(
             "background-color: #202024; color: #ffb300; border: 1px solid #ffb300; font-weight: bold; padding: 10px; font-size: 11px;"
         )
@@ -97,15 +98,15 @@ class WorkspaceDetails(QWidget):
         c_layout.setSpacing(8)
 
         self.combo_runners = QComboBox()
-        c_layout.addRow("Runner Wine/Proton:", self.combo_runners)
+        c_layout.addRow(_("workspace_lbl_runner"), self.combo_runners)
 
-        self.lbl_prefix_path = QLabel("Sin asignar")
+        self.lbl_prefix_path = QLabel(_("workspace_unassigned"))
         self.lbl_prefix_path.setStyleSheet("font-family: monospace; font-size: 11px;")
-        c_layout.addRow("Carpeta WINEPREFIX:", self.lbl_prefix_path)
+        c_layout.addRow(_("workspace_lbl_prefix_path"), self.lbl_prefix_path)
 
-        self.lbl_exe_path = QLabel("Sin asignar")
+        self.lbl_exe_path = QLabel(_("workspace_unassigned"))
         self.lbl_exe_path.setStyleSheet("font-family: monospace; font-size: 11px;")
-        c_layout.addRow("Ejecutable .EXE:", self.lbl_exe_path)
+        c_layout.addRow(_("workspace_lbl_exe"), self.lbl_exe_path)
 
         layout.addWidget(self.config_card)
 
@@ -148,14 +149,14 @@ class WorkspaceDetails(QWidget):
 
         self.lbl_game_title.setText(game_name)
         self.lbl_recipe_badge.setText(
-            f"Receta: {recipe.get('display_name', self.current_recipe_id)}"
+            _("workspace_recipe_label", name=recipe.get("display_name", self.current_recipe_id))
         )
 
         prefix_full = prefixes_dir / self.current_prefix
         self.lbl_prefix_path.setText(str(prefix_full))
-        self.lbl_exe_path.setText(game_info.get("exe", "Sin asignar"))
+        self.lbl_exe_path.setText(game_info.get("exe", _("workspace_unassigned")))
 
-        self.btn_play.setText("🔥 ¡AL ABORDAJE! (Lanzar)")
+        self.btn_play.setText(_("workspace_btn_play"))
         self.btn_secondary_action.hide()
 
         idx = self.combo_runners.findText(game_info.get("runner", ""))
@@ -165,16 +166,21 @@ class WorkspaceDetails(QWidget):
             self.combo_runners.setCurrentIndex(0)
 
         if missing_verbs:
-            self.lbl_env_status.setText(f"⚠️ Entorno incompleto (Falta: {', '.join(missing_verbs)})")
+            self.lbl_env_status.setText(
+                _("workspace_env_incomplete", verbs=", ".join(missing_verbs))
+            )
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #ffb300; padding: 2px 0px;"
             )
             self.btn_auto_inject.setText(
-                f"⚡ Instalar dependencias de receta ({len(missing_verbs)} faltantes)"
+                _(
+                    "workspace_btn_auto_inject_missing",
+                    count=len(missing_verbs),
+                )
             )
             self.btn_auto_inject.show()
         else:
-            self.lbl_env_status.setText("✅ Entorno optimizado y listo")
+            self.lbl_env_status.setText(_("workspace_env_ready"))
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #00e676; padding: 2px 0px;"
             )
@@ -188,28 +194,35 @@ class WorkspaceDetails(QWidget):
         self.current_recipe_id = recipe.get("recipe_id", "default_gaming")
         self.current_prefix = env_name
 
-        self.lbl_game_title.setText(f"Contenedor: {env_name}")
-        self.lbl_recipe_badge.setText(f"Receta Vinculada: {recipe.get('display_name', 'Ninguna')}")
+        self.lbl_game_title.setText(_("workspace_container_label", name=env_name))
+        self.lbl_recipe_badge.setText(
+            _(
+                "workspace_recipe_linked",
+                name=recipe.get("display_name", _("workspace_none")),
+            )
+        )
 
         prefix_full = prefixes_dir / env_name
         self.lbl_prefix_path.setText(str(prefix_full))
-        self.lbl_exe_path.setText("Varios (Contenedor de Sistema)")
+        self.lbl_exe_path.setText(_("workspace_exe_multiple"))
 
-        self.btn_play.setText("📂 ABRIR CARPETA DRIVE_C")
+        self.btn_play.setText(_("workspace_btn_open_drive_c"))
         self.btn_secondary_action.show()
-        self.btn_secondary_action.setText("✏️ Renombrar Entorno")
+        self.btn_secondary_action.setText(_("workspace_btn_rename_env"))
 
         if missing_verbs:
             self.lbl_env_status.setText(
-                f"⚠️ Contenedor incompleto (Falta: {', '.join(missing_verbs)})"
+                _("workspace_container_incomplete", verbs=", ".join(missing_verbs))
             )
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #ffb300; padding: 4px 0px;"
             )
-            self.btn_auto_inject.setText(f"⚡ Completar Entorno ({len(missing_verbs)} faltantes)")
+            self.btn_auto_inject.setText(
+                _("workspace_btn_complete_env", count=len(missing_verbs))
+            )
             self.btn_auto_inject.show()
         else:
-            self.lbl_env_status.setText("✅ Contenedor optimizado y listo")
+            self.lbl_env_status.setText(_("workspace_container_ready"))
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #00e676; padding: 4px 0px;"
             )

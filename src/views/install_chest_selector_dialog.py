@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 from PySide6.QtCore import Qt
-from i18n import _, ACTIVE_LANG
+from i18n import _
 
 
 class InstallChestSelectorDialog(QDialog):
@@ -196,7 +196,7 @@ class InstallChestSelectorDialog(QDialog):
 
         footer_layout.addStretch(1)
 
-        btn_cancel = QPushButton("Cancelar" if ACTIVE_LANG == "es" else "Cancel")
+        btn_cancel = QPushButton(_("selector_btn_cancel"))
         btn_cancel.setObjectName("CancelBtn")
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.clicked.connect(self.reject)

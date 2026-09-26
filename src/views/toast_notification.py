@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QWidget
 from PySide6.QtCore import Qt, QTimer, QPoint
 
+from i18n import _
+
 
 class ToastNotification(QFrame):
     """
@@ -29,7 +31,7 @@ class ToastNotification(QFrame):
         layout.addWidget(self.lbl_message, stretch=1)
 
         # Dismiss button
-        self.btn_dismiss = QPushButton("Desestimar")
+        self.btn_dismiss = QPushButton(_("toast_btn_dismiss"))
         self.btn_dismiss.setStyleSheet(
             "background-color: transparent; border: none; color: #a1a1aa; "
             "font-size: 12px; font-weight: bold; padding: 2px 6px;"

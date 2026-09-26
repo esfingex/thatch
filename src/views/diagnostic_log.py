@@ -9,6 +9,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from i18n import _
+
 
 class DiagnosticLogCard(QFrame):
     """
@@ -23,7 +25,7 @@ class DiagnosticLogCard(QFrame):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
 
-        card_lbl = QLabel("Bitácora de Diagnóstico (Recetas):")
+        card_lbl = QLabel(_("diag_title"))
         card_lbl.setObjectName("CardTitle")
         layout.addWidget(card_lbl)
 

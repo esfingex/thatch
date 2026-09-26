@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal, Qt, Slot
 
+from i18n import _
+
 
 class CreateChestWizard(QDialog):
     """
@@ -33,7 +35,7 @@ class CreateChestWizard(QDialog):
         self.recipes = recipes
         self.runners = runners
 
-        self.setWindowTitle("Create Treasure Chest")
+        self.setWindowTitle(_("wizard_window_title"))
         self.resize(640, 520)
         self.setObjectName("WizardDialog")
 
@@ -48,7 +50,7 @@ class CreateChestWizard(QDialog):
 
         # 1. Back button & Title Header
         header_layout = QHBoxLayout()
-        self.btn_back_header = QPushButton("← Back")
+        self.btn_back_header = QPushButton(_("cdetails_btn_back"))
         self.btn_back_header.setStyleSheet(
             "background-color: transparent; border: none; color: #a1a1aa; font-weight: bold;"
         )
@@ -56,9 +58,9 @@ class CreateChestWizard(QDialog):
         self.btn_back_header.clicked.connect(self.reject)
 
         header_title_layout = QVBoxLayout()
-        self.lbl_wizard_title = QLabel("⚓ Create New Treasure Chest")
+        self.lbl_wizard_title = QLabel(_("wizard_title"))
         self.lbl_wizard_title.setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold;")
-        self.lbl_wizard_subtitle = QLabel("Set up a new Windows environment")
+        self.lbl_wizard_subtitle = QLabel(_("wizard_subtitle"))
         self.lbl_wizard_subtitle.setStyleSheet("color: #71717a; font-size: 12px;")
         header_title_layout.addWidget(self.lbl_wizard_title)
         header_title_layout.addWidget(self.lbl_wizard_subtitle)
@@ -116,11 +118,11 @@ class CreateChestWizard(QDialog):
         # 4. Navigation Buttons (Bottom)
         bottom_layout = QHBoxLayout()
 
-        self.btn_prev = QPushButton("Previous")
+        self.btn_prev = QPushButton(_("wizard_btn_prev"))
         self.btn_prev.setCursor(Qt.PointingHandCursor)
         self.btn_prev.clicked.connect(self._on_prev)
 
-        self.btn_next = QPushButton("Next")
+        self.btn_next = QPushButton(_("wizard_btn_next"))
         self.btn_next.setObjectName("BlueBtn")
         self.btn_next.setCursor(Qt.PointingHandCursor)
         self.btn_next.clicked.connect(self._on_next)
@@ -140,15 +142,15 @@ class CreateChestWizard(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        title = QLabel("Name Your Chest")
+        title = QLabel(_("wizard_step1_title"))
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
 
-        subtitle = QLabel("Choose a memorable name for your treasure chest")
+        subtitle = QLabel(_("wizard_step1_subtitle"))
         subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
 
         self.txt_chest_name = QLineEdit()
-        self.txt_chest_name.setPlaceholderText("e.g., Gaming Chest, Work Chest...")
+        self.txt_chest_name.setPlaceholderText(_("wizard_step1_placeholder"))
         self.txt_chest_name.textChanged.connect(self._validate_step1)
 
         layout.addWidget(title)
@@ -164,26 +166,26 @@ class CreateChestWizard(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
-        title = QLabel("Configuration Mode")
+        title = QLabel(_("wizard_step2_title"))
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
         layout.addWidget(title)
 
-        subtitle = QLabel("Choose a pre-configured recipe preset or customize manually")
+        subtitle = QLabel(_("wizard_step2_subtitle"))
         subtitle.setStyleSheet("color: #71717a; font-size: 13px; margin-bottom: 8px;")
         layout.addWidget(subtitle)
 
         # Dual choice radio buttons
         self.mode_group = QButtonGroup(self)
 
-        self.radio_preset = QRadioButton("Usar Receta Preconfigurada (Preset)")
+        self.radio_preset = QRadioButton(_("wizard_radio_preset"))
         self.radio_preset.setChecked(True)
         self.radio_preset.setStyleSheet("font-weight: bold; color: #ffffff;")
         self.radio_preset.setCursor(Qt.PointingHandCursor)
         self.mode_group.addButton(self.radio_preset)
         layout.addWidget(self.radio_preset)
 
-        self.radio_manual = QRadioButton("Configuración Manual Avanzada (Crear Receta)")
+        self.radio_manual = QRadioButton(_("wizard_radio_manual"))
         self.radio_manual.setStyleSheet("font-weight: bold; color: #ffffff;")
         self.radio_manual.setCursor(Qt.PointingHandCursor)
         self.mode_group.addButton(self.radio_manual)
@@ -204,19 +206,17 @@ class CreateChestWizard(QDialog):
         pres_layout.setContentsMargins(0, 8, 0, 0)
         pres_layout.setSpacing(8)
 
-        lbl_pres_desc = QLabel("Select compatibility recipe preset:")
+        lbl_pres_desc = QLabel(_("wizard_lbl_preset_desc"))
         lbl_pres_desc.setObjectName("CardLabel")
         self.combo_env = QComboBox()
         for rid, rdata in self.recipes.items():
             self.combo_env.addItem(rdata.get("display_name", rid), rid)
 
         # Sandbox for Presets pathway too
-        self.chk_sandbox_preset = QCheckBox("Activar Aislamiento de Seguridad (Sandbox)")
+        self.chk_sandbox_preset = QCheckBox(_("wizard_chk_sandbox"))
         self.chk_sandbox_preset.setChecked(False)
         self.chk_sandbox_preset.setStyleSheet("color: #60a5fa; font-weight: bold; margin-top: 8px;")
-        self.chk_sandbox_preset.setToolTip(
-            "Elimina accesos a carpetas reales como /home e independiza el prefijo para máxima seguridad."
-        )
+        self.chk_sandbox_preset.setToolTip(_("wizard_tooltip_sandbox"))
 
         pres_layout.addWidget(lbl_pres_desc)
         pres_layout.addWidget(self.combo_env)
@@ -230,7 +230,7 @@ class CreateChestWizard(QDialog):
         man_layout.setContentsMargins(0, 8, 0, 0)
         man_layout.setSpacing(10)
 
-        lbl_man_title = QLabel("Recipe Customization:")
+        lbl_man_title = QLabel(_("wizard_lbl_manual_title"))
         lbl_man_title.setObjectName("CardLabel")
         lbl_man_title.setStyleSheet("font-weight: bold;")
         man_layout.addWidget(lbl_man_title)
@@ -238,39 +238,31 @@ class CreateChestWizard(QDialog):
         # Name of manual recipe
         self.txt_manual_display_name = QLineEdit()
         self.txt_manual_display_name.setPlaceholderText(
-            "Nombre de Receta Personalizada (ej: Ultra Gaming)"
+            _("wizard_manual_name_placeholder")
         )
         man_layout.addWidget(self.txt_manual_display_name)
 
         # Performance variables checkboxes
-        lbl_perf = QLabel("Performance Variables:")
+        lbl_perf = QLabel(_("wizard_lbl_perf"))
         lbl_perf.setObjectName("CardLabel")
         man_layout.addWidget(lbl_perf)
 
         self.chk_esync = QCheckBox("WINEESYNC = 1")
         self.chk_esync.setChecked(True)
-        self.chk_esync.setToolTip(
-            "Mejora el rendimiento general del juego y reduce el consumo del procesador (CPU)."
-        )
+        self.chk_esync.setToolTip(_("wizard_tooltip_esync"))
 
         self.chk_fsync = QCheckBox("WINEFSYNC = 1")
         self.chk_fsync.setChecked(True)
-        self.chk_fsync.setToolTip(
-            "Aumenta los FPS en juegos (requiere un sistema Linux optimizado para gaming como Zen o CachyOS)."
-        )
+        self.chk_fsync.setToolTip(_("wizard_tooltip_fsync"))
 
         self.chk_laa = QCheckBox("PROTON_FORCE_LARGE_ADDRESS_AWARE = 1")
         self.chk_laa.setChecked(True)
-        self.chk_laa.setToolTip(
-            "Evita cierres inesperados en juegos de 32 bits permitiéndoles usar más memoria RAM."
-        )
+        self.chk_laa.setToolTip(_("wizard_tooltip_laa"))
 
-        self.chk_sandbox = QCheckBox("Activar Aislamiento de Seguridad (Sandbox)")
+        self.chk_sandbox = QCheckBox(_("wizard_chk_sandbox"))
         self.chk_sandbox.setChecked(False)
         self.chk_sandbox.setStyleSheet("color: #60a5fa; font-weight: bold;")
-        self.chk_sandbox.setToolTip(
-            "Elimina accesos a carpetas reales como /home e independiza el prefijo para máxima seguridad."
-        )
+        self.chk_sandbox.setToolTip(_("wizard_tooltip_sandbox"))
 
         man_layout.addWidget(self.chk_esync)
         man_layout.addWidget(self.chk_fsync)
@@ -278,10 +270,10 @@ class CreateChestWizard(QDialog):
         man_layout.addWidget(self.chk_sandbox)
 
         # Custom winetricks verbs input
-        lbl_verbs = QLabel("Winetricks Dependencies (comma separated):")
+        lbl_verbs = QLabel(_("wizard_lbl_verbs"))
         lbl_verbs.setObjectName("CardLabel")
         self.txt_manual_verbs = QLineEdit()
-        self.txt_manual_verbs.setPlaceholderText("e.g. d3dx9, vcrun2015, dxvk")
+        self.txt_manual_verbs.setPlaceholderText(_("wizard_verbs_placeholder"))
         man_layout.addWidget(lbl_verbs)
         man_layout.addWidget(self.txt_manual_verbs)
 
@@ -304,11 +296,11 @@ class CreateChestWizard(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(16)
 
-        title = QLabel("Select Wine Runner")
+        title = QLabel(_("wizard_step3_title"))
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
 
-        subtitle = QLabel("Choose the Wine runtime compiler/wrapper for this environment")
+        subtitle = QLabel(_("wizard_step3_subtitle"))
         subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
 
         self.combo_runner = QComboBox()
@@ -319,7 +311,7 @@ class CreateChestWizard(QDialog):
         # Add custom downloaded/community runners if available
         if self.runners:
             for runner in self.runners:
-                self.combo_runner.addItem(f"Community: {runner}", runner)
+                self.combo_runner.addItem(_("wizard_runner_community", runner=runner), runner)
 
         layout.addWidget(title)
         layout.addWidget(subtitle)
@@ -334,11 +326,11 @@ class CreateChestWizard(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
-        title = QLabel("Review Your Chest")
+        title = QLabel(_("wizard_step4_title"))
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
 
-        subtitle = QLabel("Confirm your configuration details below before setup starts")
+        subtitle = QLabel(_("wizard_step4_subtitle"))
         subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
 
         grid_frame = QFrame()
@@ -348,13 +340,13 @@ class CreateChestWizard(QDialog):
         grid_layout = QVBoxLayout(grid_frame)
         grid_layout.setSpacing(10)
 
-        self.lbl_review_name = QLabel("Name: -")
+        self.lbl_review_name = QLabel(_("wizard_review_name"))
         self.lbl_review_name.setStyleSheet("color: #ffffff; font-size: 14px; font-weight: bold;")
-        self.lbl_review_mode = QLabel("Mode: -")
+        self.lbl_review_mode = QLabel(_("wizard_review_mode"))
         self.lbl_review_mode.setStyleSheet("color: #e4e4e7; font-size: 13px;")
-        self.lbl_review_env = QLabel("Environment: -")
+        self.lbl_review_env = QLabel(_("wizard_review_env"))
         self.lbl_review_env.setStyleSheet("color: #e4e4e7; font-size: 13px;")
-        self.lbl_review_runner = QLabel("Runner: -")
+        self.lbl_review_runner = QLabel(_("wizard_review_runner"))
         self.lbl_review_runner.setStyleSheet("color: #e4e4e7; font-size: 13px;")
 
         grid_layout.addWidget(self.lbl_review_name)
@@ -380,9 +372,9 @@ class CreateChestWizard(QDialog):
 
         # Set next button text
         if self.current_step == 3:
-            self.btn_next.setText("Create")
+            self.btn_next.setText(_("wizard_btn_create"))
         else:
-            self.btn_next.setText("Next")
+            self.btn_next.setText(_("wizard_btn_next"))
 
         # Stepper active items
         for idx, circle in enumerate(self.step_circles):
@@ -418,21 +410,26 @@ class CreateChestWizard(QDialog):
             if self.current_step == 3:
                 name = self.txt_chest_name.text().strip()
                 is_preset = self.radio_preset.isChecked()
-                mode_str = "Preset Recipe" if is_preset else "Manual Custom Configuration"
+                mode_str = (
+                    _("wizard_mode_preset") if is_preset else _("wizard_mode_manual")
+                )
 
                 if is_preset:
                     env = self.combo_env.currentText()
                 else:
                     manual_display = (
-                        self.txt_manual_display_name.text().strip() or f"Manual Custom ({name})"
+                        self.txt_manual_display_name.text().strip()
+                        or _("wizard_manual_fallback", name=name)
                     )
                     env = manual_display
 
                 runner = self.combo_runner.currentText()
-                self.lbl_review_name.setText(f"Name: {name}")
-                self.lbl_review_mode.setText(f"Mode: {mode_str}")
-                self.lbl_review_env.setText(f"Configuration: {env}")
-                self.lbl_review_runner.setText(f"Runner: {runner}")
+                self.lbl_review_name.setText(_("wizard_review_name_value", name=name))
+                self.lbl_review_mode.setText(_("wizard_review_mode_value", mode=mode_str))
+                self.lbl_review_env.setText(_("wizard_review_env_value", env=env))
+                self.lbl_review_runner.setText(
+                    _("wizard_review_runner_value", runner=runner)
+                )
 
             self._update_stepper()
         else:
