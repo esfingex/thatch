@@ -28,3 +28,8 @@ from .installer import (
     run_chest_installer,
     show_post_installer_dialog,
 )
+from .sandbox import (
+    detect_prefix_user,
+    enforce_sandbox,
+    is_sandboxed,
+)

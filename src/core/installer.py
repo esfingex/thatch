@@ -52,9 +52,7 @@ def handle_cli_args(parent_launcher) -> None:
         parent_launcher.is_installer_mode = True
         QTimer.singleShot(
             200,
-            lambda: prompt_installer_launch(
-                parent_launcher, install_path, target_chest
-            ),
+            lambda: prompt_installer_launch(parent_launcher, install_path, target_chest),
         )
 
 
@@ -121,6 +119,15 @@ def run_native_innoextract(parent_launcher, prefix_name: str, installer_path: st
             stderr=subprocess.PIPE,
             text=True,
         )
+        if res.returncode != 0:
+            print(
+                f"[innoextract] Extraction failed (code {res.returncode}): "
+                f"{(res.stderr or '').strip()[:500]}"
+            )
+            parent_launcher.toast.show_message(
+                "⚠ innoextract falló; intentando instalación con Wine..."
+            )
+            return False
 
         app_subfolder = target_app_dir / "app"
         if app_subfolder.exists() and app_subfolder.is_dir():
@@ -181,11 +188,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         if ginfo.get("prefix") == prefix_name:
             associated_game = ginfo
             break
+    sandbox_flag = bool(associated_game.get("sandbox", False)) if associated_game else False
 
     recipe_id = (
-        associated_game.get("recipe_id", "default_gaming")
-        if associated_game
-        else "default_gaming"
+        associated_game.get("recipe_id", "default_gaming") if associated_game else "default_gaming"
     )
     runner_override = associated_game.get("runner") if associated_game else None
     if not runner_override or runner_override == "Wine del Sistema (/usr/bin/wine)":
@@ -230,9 +236,6 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             env["LD_LIBRARY_PATH"] = f"{lib_dir}:{env.get('LD_LIBRARY_PATH', '')}"
 
     # Configure all environment variables BEFORE wineboot/wineserver initialization
-    env["NO_AT_BRIDGE"] = "1"
-    env["XLIB_SKIP_ARGB_VISUALS"] = "1"
-
     # Sync backend para instaladores (receta verificada):
     # - Con WINEESYNC=0/WINEFSYNC=0 estos wines caen a ntsync, y ntsync no
     #   soporta PulseEvent -> spinlocks en los workers de descompresión
@@ -241,34 +244,11 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     #   builds que lo soportan. WINE_DISABLE_NTSYNC/WINE_DISABLE_FAST_SYNC no
     #   tienen efecto en GE-Proton 10-34 (verificado empíricamente), por lo que
     #   no se usan.
-    env["WINEESYNC"] = "1"
-    env["WINEFSYNC"] = "0"
-    env["WINENTSYNC"] = "0"
-
-    # Suppress cmd.exe move/copy overwrite confirmation prompts (prevent FitGirl batch script hangs)
-    env["COPYCMD"] = "/Y"
-    env["DIRCMD"] = "/O:N"
-
-    # Limit xtool, srep, and lolz decompressor thread contention on Linux anonymous pipes (prevent pipe deadlocks)
-    env["XTOOL_THREADS"] = "4"
-    env["SREP_THREADS"] = "4"
-    env["LOLZ_THREADS"] = "4"
-    env["MAX_THREADS"] = "4"
-
-    # Enable Large Address Aware (LAA=1) to allow 32-bit processes up to 4GB virtual address space
-    # Repack decompressors (unarc.dll / cls-lolz.exe) require >2GB RAM buffers during extraction
-    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
-    env["WINE_LARGE_ADDRESS_AWARE"] = "1"
-
-    # Enable native unarc.dll and ISDone.dll overrides so InnoSetup decompression procedures load without 'Could not call proc' error
-    dll_overrides = "unarc=n,b;isdone=n,b;mscoree=d;mshtml=d;atl100=n,b"
-    if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
-        env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
-    else:
-        env["WINEDLLOVERRIDES"] = dll_overrides
+    apply_repack_install_env(env)
 
     # Terminate any lingering wineserver before initializing prefix so wineserver inherits clean env
     import subprocess
+
     try:
         wineserver_bin = (
             Path(wine_cmd).parent / "wineserver"
@@ -350,8 +330,6 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     system32.mkdir(parents=True, exist_ok=True)
     syswow64.mkdir(parents=True, exist_ok=True)
 
-
-
     # Auto-inject installer helper DLLs using proper architecture separation (32-bit to syswow64, 64-bit to system32)
     if setup_dir.exists():
         for dll_file in setup_dir.rglob("*.dll"):
@@ -390,14 +368,8 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
 
     setup_target = str(setup_file)
 
-    vd_enabled = bool(
-        associated_game.get("virtual_desktop", False) if associated_game else False
-    )
-    vd_res = (
-        associated_game.get("virtual_desktop_res", "800x600")
-        if associated_game
-        else "800x600"
-    )
+    vd_enabled = bool(associated_game.get("virtual_desktop", False) if associated_game else False)
+    vd_res = associated_game.get("virtual_desktop_res", "800x600") if associated_game else "800x600"
 
     if vd_enabled:
         setup_win_target = f"D:\\{setup_file.name}"
@@ -436,9 +408,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     try:
         parent_launcher._pre_install_program_ids = {
             p["id"]
-            for p in get_wine_installed_programs(
-                parent_launcher.db.get_prefixes_dir(), prefix_name
-            )
+            for p in get_wine_installed_programs(parent_launcher.db.get_prefixes_dir(), prefix_name)
         }
 
         parent_launcher.toast.show_message("Instalador iniciado en segundo plano...")
@@ -472,6 +442,10 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
                     d_drive.unlink()
                 except Exception:
                     pass
+            if sandbox_flag:
+                from core.sandbox import enforce_sandbox
+
+                enforce_sandbox(parent_launcher.db.get_prefixes_dir() / p)
 
         # Terminate any lingering wineserver process from previous runner versions to prevent version mismatch crashes
         import subprocess
@@ -517,9 +491,53 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         )
     except Exception as e:
         parent_widget = parent_launcher if isinstance(parent_launcher, QWidget) else None
-        QMessageBox.critical(
-            parent_widget, "Error", f"Fallo al iniciar el instalador: {e}"
-        )
+        QMessageBox.critical(parent_widget, "Error", f"Fallo al iniciar el instalador: {e}")
+
+
+def apply_repack_install_env(env: dict[str, str]) -> dict[str, str]:
+    """Applies the verified repack-installer environment tuning in place.
+
+    Empirically verified against GE-Proton / proton-cachyos runners; the
+    comments inside document which failure mode each variable fixes.
+    """
+    env["NO_AT_BRIDGE"] = "1"
+    env["XLIB_SKIP_ARGB_VISUALS"] = "1"
+
+    # Sync backend para instaladores (receta verificada):
+    # - Con WINEESYNC=0/WINEFSYNC=0 estos wines caen a ntsync, y ntsync no
+    #   soporta PulseEvent -> spinlocks en los workers de descompresión
+    #   (instaladores clavados en el primer archivo grande).
+    # - Forzar esync resuelve el spinlock; WINENTSYNC=0 desactiva ntsync en los
+    #   builds que lo soportan. WINE_DISABLE_NTSYNC/WINE_DISABLE_FAST_SYNC no
+    #   tienen efecto en GE-Proton 10-34 (verificado empíricamente), por lo que
+    #   no se usan.
+    env["WINEESYNC"] = "1"
+    env["WINEFSYNC"] = "0"
+    env["WINENTSYNC"] = "0"
+
+    # Suppress cmd.exe move/copy overwrite confirmation prompts (prevent FitGirl batch script hangs)
+    env["COPYCMD"] = "/Y"
+    env["DIRCMD"] = "/O:N"
+
+    # Limit xtool, srep, and lolz decompressor thread contention on Linux anonymous pipes (prevent pipe deadlocks)
+    env["XTOOL_THREADS"] = "4"
+    env["SREP_THREADS"] = "4"
+    env["LOLZ_THREADS"] = "4"
+    env["MAX_THREADS"] = "4"
+
+    # Enable Large Address Aware (LAA=1) to allow 32-bit processes up to 4GB virtual address space
+    # Repack decompressors (unarc.dll / cls-lolz.exe) require >2GB RAM buffers during extraction
+    env["PROTON_FORCE_LARGE_ADDRESS_AWARE"] = "1"
+    env["WINE_LARGE_ADDRESS_AWARE"] = "1"
+
+    # Enable native unarc.dll and ISDone.dll overrides so InnoSetup decompression procedures load without 'Could not call proc' error
+    dll_overrides = "unarc=n,b;isdone=n,b;mscoree=d;mshtml=d;atl100=n,b"
+    if "WINEDLLOVERRIDES" in env and env["WINEDLLOVERRIDES"]:
+        env["WINEDLLOVERRIDES"] = f"{env['WINEDLLOVERRIDES']};{dll_overrides}"
+    else:
+        env["WINEDLLOVERRIDES"] = dll_overrides
+
+    return env
 
 
 def _boost_process_priority(pid: int, prefix_dir: Path | None = None) -> None:
@@ -556,27 +574,25 @@ def _boost_process_priority(pid: int, prefix_dir: Path | None = None) -> None:
     target_pids = set()
     if pid > 0:
         target_pids.add(str(pid))
-        # Find child PIDs
+        # Find descendant PIDs (installer decompressor children live one or two
+        # levels below the setup process). Scanning the whole process table for
+        # 'setup' would renice unrelated user processes.
         try:
             out = subprocess.check_output(
                 ["pgrep", "-P", str(pid)], stderr=subprocess.DEVNULL
             ).decode()
-            for p in out.split():
-                if p.strip():
-                    target_pids.add(p.strip())
+            children = [p.strip() for p in out.split() if p.strip()]
+            target_pids.update(children)
+            for child in children:
+                try:
+                    grandchildren = subprocess.check_output(
+                        ["pgrep", "-P", child], stderr=subprocess.DEVNULL
+                    ).decode()
+                    target_pids.update(p.strip() for p in grandchildren.split() if p.strip())
+                except Exception:
+                    pass
         except Exception:
             pass
-
-    # Also search for setup.tmp / setup.exe / unarc processes
-    try:
-        out = subprocess.check_output(
-            ["pgrep", "-f", "setup"], stderr=subprocess.DEVNULL
-        ).decode()
-        for p in out.split():
-            if p.strip():
-                target_pids.add(p.strip())
-    except Exception:
-        pass
 
     for p in target_pids:
         try:
@@ -616,8 +632,7 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
     layout.addWidget(lbl_title)
 
     lbl_msg = QLabel(
-        "El instalador está corriendo en segundo plano.<br>"
-        "Calculando datos extraídos..."
+        "El instalador está corriendo en segundo plano.<br>Calculando datos extraídos..."
     )
     lbl_msg.setTextFormat(Qt.RichText)
     lbl_msg.setWordWrap(True)
@@ -741,9 +756,7 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
                     parent_launcher.db.add_game(
                         name=reg["name"],
                         exe=str(detected_exe),
-                        runner=parent_launcher.db.data["global_config"].get(
-                            "default_runner"
-                        )
+                        runner=parent_launcher.db.data["global_config"].get("default_runner")
                         or "Wine del Sistema (/usr/bin/wine)",
                         prefix=prefix_name,
                         recipe_id="default_gaming",

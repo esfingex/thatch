@@ -148,21 +148,11 @@ class ThatchLauncher(QMainWindow):
         self.chest_details_view.terminal_requested.connect(self._on_chest_terminal)
         self.chest_details_view.rename_requested.connect(self._on_chest_rename)
         self.chest_details_view.delete_requested.connect(self._on_chest_delete)
-        self.chest_details_view.add_program_requested.connect(
-            self._on_chest_add_program
-        )
-        self.chest_details_view.run_program_requested.connect(
-            self._on_chest_run_program
-        )
-        self.chest_details_view.remove_program_requested.connect(
-            self._on_chest_remove_program
-        )
-        self.chest_details_view.remove_link_requested.connect(
-            self._on_chest_remove_link
-        )
-        self.chest_details_view.run_installer_requested.connect(
-            self._on_chest_run_installer
-        )
+        self.chest_details_view.add_program_requested.connect(self._on_chest_add_program)
+        self.chest_details_view.run_program_requested.connect(self._on_chest_run_program)
+        self.chest_details_view.remove_program_requested.connect(self._on_chest_remove_program)
+        self.chest_details_view.remove_link_requested.connect(self._on_chest_remove_link)
+        self.chest_details_view.run_installer_requested.connect(self._on_chest_run_installer)
         self.chest_details_view.install_dependency_requested.connect(
             self._on_chest_install_dependency
         )
@@ -170,15 +160,11 @@ class ThatchLauncher(QMainWindow):
             self._on_chest_remove_dependency
         )
         self.chest_details_view.runner_changed.connect(self._on_chest_runner_changed)
-        self.chest_details_view.perf_settings_changed.connect(
-            self._on_chest_perf_settings_changed
-        )
+        self.chest_details_view.perf_settings_changed.connect(self._on_chest_perf_settings_changed)
         self.chest_details_view.virtual_desktop_changed.connect(
             self._on_chest_virtual_desktop_changed
         )
-        self.chest_details_view.dpi_scale_changed.connect(
-            self._on_chest_dpi_scale_changed
-        )
+        self.chest_details_view.dpi_scale_changed.connect(self._on_chest_dpi_scale_changed)
         self.chest_details_view.monitor_changed.connect(self._on_chest_monitor_changed)
         self.chest_details_view.link_registry_program_requested.connect(
             self._on_link_registry_program
@@ -194,24 +180,14 @@ class ThatchLauncher(QMainWindow):
         # View 3: Preferences View
         self.preferences_view = PreferencesView(self.db, self._get_runners_list(), self)
         self.preferences_view.toast_requested.connect(self._on_toast_requested)
-        self.preferences_view.update_catalog_requested.connect(
-            self._on_update_catalog_requested
-        )
-        self.preferences_view.cleanup_orphans_requested.connect(
-            self._on_manual_cleanup_orphans
-        )
-        self.preferences_view.register_context_menu_requested.connect(
-            self.register_context_menu
-        )
-        self.preferences_view.combo_language.currentIndexChanged.connect(
-            self.on_language_changed
-        )
+        self.preferences_view.update_catalog_requested.connect(self._on_update_catalog_requested)
+        self.preferences_view.cleanup_orphans_requested.connect(self._on_manual_cleanup_orphans)
+        self.preferences_view.register_context_menu_requested.connect(self.register_context_menu)
+        self.preferences_view.combo_language.currentIndexChanged.connect(self.on_language_changed)
         self.view_stack.addWidget(self.preferences_view)
 
         # View 4: Wine Runners View
-        self.wine_runners_view = WineRunnersView(
-            self.db, self._get_runners_list(), self
-        )
+        self.wine_runners_view = WineRunnersView(self.db, self._get_runners_list(), self)
         self.wine_runners_view.runner_downloaded.connect(self._on_runner_downloaded)
         self.wine_runners_view.toast_requested.connect(self._on_toast_requested)
         self.view_stack.addWidget(self.wine_runners_view)
@@ -269,17 +245,13 @@ class ThatchLauncher(QMainWindow):
     def cleanup_orphaned_launchers(self) -> int:
         return core.cleanup_orphaned_launchers(self.db)
 
-    def _extract_exe_icon(
-        self, prefix_name: str, exe_path: Path, game_name: str
-    ) -> Path | None:
+    def _extract_exe_icon(self, prefix_name: str, exe_path: Path, game_name: str) -> Path | None:
         return core.extract_exe_icon(prefix_name, exe_path, game_name)
 
     def handle_cli_args(self) -> None:
         core.handle_cli_args(self)
 
-    def prompt_installer_launch(
-        self, installer_path: str, target_chest: str | None = None
-    ) -> None:
+    def prompt_installer_launch(self, installer_path: str, target_chest: str | None = None) -> None:
         core.prompt_installer_launch(self, installer_path, target_chest)
 
     @Slot(str, str)
@@ -341,9 +313,7 @@ class ThatchLauncher(QMainWindow):
             names.update(
                 d.name
                 for d in runners_dir.iterdir()
-                if d.is_dir()
-                and "aarch64" not in d.name.lower()
-                and "arm64" not in d.name.lower()
+                if d.is_dir() and "aarch64" not in d.name.lower() and "arm64" not in d.name.lower()
             )
         # Motores de sistema (compat tools de Steam: proton-cachyos-slr, etc.)
         from core.wine import discover_system_runners
@@ -361,9 +331,9 @@ class ThatchLauncher(QMainWindow):
         for prefix_name in prefixes:
             primary_recipe = None
             for gname, ginfo in games.items():
-                if ginfo.get(
-                    "prefix"
-                ) == prefix_name and "Contenedor de Sistema" in ginfo.get("exe", ""):
+                if ginfo.get("prefix") == prefix_name and "Contenedor de Sistema" in ginfo.get(
+                    "exe", ""
+                ):
                     primary_recipe = ginfo.get("recipe_id")
                     break
             if primary_recipe and primary_recipe != "default_gaming":
@@ -378,9 +348,7 @@ class ThatchLauncher(QMainWindow):
             self.db.save()
             games = self.db.list_games()
 
-        self.chests_view.populate_chests(
-            prefixes, games, self.recipes, self.db.get_prefixes_dir()
-        )
+        self.chests_view.populate_chests(prefixes, games, self.recipes, self.db.get_prefixes_dir())
         self.cargo_view.populate_maps(prefixes, self.recipes)
         self.preferences_view.update_runners_list(runners)
         self.wine_runners_view.update_runners_list(runners)
@@ -484,9 +452,7 @@ class ThatchLauncher(QMainWindow):
         env, runner_path = self.get_wine_env(name, recipe_id, runner_name)
         wine_exe = self._get_wine_cmd(runner_path)
 
-        self.toast.show_message(
-            f"Creando e inicializando contenedor de Wine para '{name}'..."
-        )
+        self.toast.show_message(f"Creando e inicializando contenedor de Wine para '{name}'...")
 
         self.console_dialog = core.WinetricksConsoleDialog(
             "wineboot (Inicialización de Sistema)", name, self
@@ -501,9 +467,7 @@ class ThatchLauncher(QMainWindow):
             self._on_chest_init_finished(exit_code, name)
 
         self.process.finished.connect(_finish_handler)
-        self.process.errorOccurred.connect(
-            lambda err: self._on_chest_init_error(err, name)
-        )
+        self.process.errorOccurred.connect(lambda err: self._on_chest_init_error(err, name))
 
         q_env = QProcessEnvironment.systemEnvironment()
         for k, v in env.items():
@@ -517,9 +481,7 @@ class ThatchLauncher(QMainWindow):
         q_env.insert("WINEDEBUG", "-all")
 
         if "WINEDLLOVERRIDES" in env:
-            q_env.insert(
-                "WINEDLLOVERRIDES", env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d"
-            )
+            q_env.insert("WINEDLLOVERRIDES", env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d")
         else:
             q_env.insert("WINEDLLOVERRIDES", "mscoree,mshtml=d")
 
@@ -584,9 +546,7 @@ class ThatchLauncher(QMainWindow):
             catalog=self.load_winetricks_catalog(),
         )
         if hasattr(self.sidebar, "btn_chest_details"):
-            self.sidebar.btn_chest_details.setText(
-                f"📦  {prefix_name.replace('_', ' ').title()}"
-            )
+            self.sidebar.btn_chest_details.setText(f"📦  {prefix_name.replace('_', ' ').title()}")
         self._on_sidebar_view_changed("chest_details")
 
     # ─── CHEST DETAILS ACTIONS ─────────────────────────────────────────────────
@@ -595,9 +555,9 @@ class ThatchLauncher(QMainWindow):
     def _on_chest_run(self, prefix_name: str) -> None:
         game_to_run = None
         for gname, ginfo in self.db.list_games().items():
-            if ginfo.get(
-                "prefix"
-            ) == prefix_name and "Contenedor de Sistema" not in ginfo.get("exe", ""):
+            if ginfo.get("prefix") == prefix_name and "Contenedor de Sistema" not in ginfo.get(
+                "exe", ""
+            ):
                 game_to_run = gname
                 break
         if game_to_run:
@@ -626,9 +586,7 @@ class ThatchLauncher(QMainWindow):
         recipe_id = self._get_chest_recipe_id(prefix_name)
         env, _ = self.get_wine_env(prefix_name, recipe_id)
 
-        default_term = self.db.data["global_config"].get(
-            "default_terminal", "gnome-terminal"
-        )
+        default_term = self.db.data["global_config"].get("default_terminal", "gnome-terminal")
         sh_cmd = f"export WINEPREFIX='{env['WINEPREFIX']}'; export PATH='{env.get('PATH', '')}'; exec bash"
 
         try:
@@ -667,9 +625,7 @@ class ThatchLauncher(QMainWindow):
                 self.refresh_data()
                 self.update_system_context_menu()
                 self._on_chest_selected(clean_new)
-                self.toast.show_message(
-                    f"¡Cofre renombrado exitosamente a '{clean_new}'!"
-                )
+                self.toast.show_message(f"¡Cofre renombrado exitosamente a '{clean_new}'!")
             else:
                 QMessageBox.warning(
                     self,
@@ -717,9 +673,7 @@ class ThatchLauncher(QMainWindow):
         return "default_gaming"
 
     @Slot(str)
-    def _on_chest_add_program(
-        self, prefix_name: str, exe_path_override: str | None = None
-    ) -> None:
+    def _on_chest_add_program(self, prefix_name: str, exe_path_override: str | None = None) -> None:
         if exe_path_override:
             path = exe_path_override
         else:
@@ -755,9 +709,7 @@ class ThatchLauncher(QMainWindow):
                     prefix=prefix_name,
                     recipe_id=recipe_id,
                 )
-                icon_path = self._extract_exe_icon(
-                    prefix_name, exe_file, clean_game_name
-                )
+                icon_path = self._extract_exe_icon(prefix_name, exe_file, clean_game_name)
                 self.generate_launcher(prefix_name, clean_game_name, icon_path)
                 self.refresh_data()
                 self.toast.show_message(
@@ -812,12 +764,8 @@ class ThatchLauncher(QMainWindow):
                 try:
                     p_env = dict(sys.environ)
                     p_env.update(env)
-                    subprocess.Popen(
-                        f'"{wine_cmd}" {uninst_str}', shell=True, env=p_env
-                    )
-                    self.toast.show_message(
-                        f"Ejecutando desinstalador de '{game_name}'..."
-                    )
+                    subprocess.Popen(f'"{wine_cmd}" {uninst_str}', shell=True, env=p_env)
+                    self.toast.show_message(f"Ejecutando desinstalador de '{game_name}'...")
                 except Exception as e:
                     self.toast.show_message(f"Error al ejecutar desinstalador: {e}")
 
@@ -832,9 +780,7 @@ class ThatchLauncher(QMainWindow):
     def _on_manual_cleanup_orphans(self) -> None:
         count = self.cleanup_orphaned_launchers()
         if count > 0:
-            self.toast.show_message(
-                f"¡Se limpiaron {count} accesos directos huérfanos del panel!"
-            )
+            self.toast.show_message(f"¡Se limpiaron {count} accesos directos huérfanos del panel!")
         else:
             self.toast.show_message("No se encontraron accesos directos huérfanos.")
 
@@ -891,9 +837,7 @@ class ThatchLauncher(QMainWindow):
             icon_path = self._extract_exe_icon(prefix_name, detected_exe, game_name)
             self.generate_launcher(prefix_name, game_name, icon_path)
             self.refresh_data()
-            self.toast.show_message(
-                f"¡'{game_name}' vinculado y lanzador generado con éxito!"
-            )
+            self.toast.show_message(f"¡'{game_name}' vinculado y lanzador generado con éxito!")
 
     @Slot(str, str)
     def _on_chest_run_program(self, prefix_name: str, game_name: str) -> None:
@@ -912,12 +856,10 @@ class ThatchLauncher(QMainWindow):
             return
 
         # Check for generated script launcher first
-        clean_name = (
-            game_name.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
-        )
-        sh_launcher = (
-            self.db.get_prefixes_dir() / prefix_name / "launchers" / f"{clean_name}.sh"
-        )
+        from core.launchers import clean_game_name
+
+        clean_name = clean_game_name(game_name)
+        sh_launcher = self.db.get_prefixes_dir() / prefix_name / "launchers" / f"{clean_name}.sh"
 
         launch_mode = self.db.get_launch_mode()
         if launch_mode == "extreme":
@@ -961,9 +903,7 @@ class ThatchLauncher(QMainWindow):
 
             self.toast.show_message(f"Lanzando '{game_name}'...")
         except Exception as e:
-            QMessageBox.critical(
-                self, "Error de Ejecución", f"Fallo al iniciar el juego: {e}"
-            )
+            QMessageBox.critical(self, "Error de Ejecución", f"Fallo al iniciar el juego: {e}")
 
     # ─── CHEST SETTINGS & CONFIGURATION SLOTS ─────────────────────────────────
 
@@ -984,9 +924,7 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        self.toast.show_message(
-            f"Motor de Wine para '{prefix_name}' actualizado a: {runner_name}"
-        )
+        self.toast.show_message(f"Motor de Wine para '{prefix_name}' actualizado a: {runner_name}")
 
     @Slot(str, str, bool)
     def _on_chest_perf_settings_changed(
@@ -1008,9 +946,7 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        self.toast.show_message(
-            f"Ajustes de rendimiento y sandbox para '{prefix_name}' guardados."
-        )
+        self.toast.show_message(f"Ajustes de rendimiento y sandbox para '{prefix_name}' guardados.")
 
     @Slot(str, bool, str)
     def _on_chest_virtual_desktop_changed(
@@ -1033,9 +969,7 @@ class ThatchLauncher(QMainWindow):
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
         status = "activado" if enabled else "desactivado"
-        self.toast.show_message(
-            f"Escritorio Virtual para '{prefix_name}' {status} ({resolution})."
-        )
+        self.toast.show_message(f"Escritorio Virtual para '{prefix_name}' {status} ({resolution}).")
 
     @Slot(str, int)
     def _on_chest_dpi_scale_changed(self, prefix_name: str, dpi_val: int) -> None:
@@ -1044,9 +978,7 @@ class ThatchLauncher(QMainWindow):
             if ginfo.get("prefix") == prefix_name:
                 ginfo["dpi_scale"] = dpi_val
         self.db.save()
-        self.toast.show_message(
-            f"Escala DPI para '{prefix_name}' guardada ({dpi_val} DPI)."
-        )
+        self.toast.show_message(f"Escala DPI para '{prefix_name}' guardada ({dpi_val} DPI).")
 
     @Slot(str, str)
     def _on_chest_monitor_changed(self, prefix_name: str, monitor_name: str) -> None:
@@ -1065,9 +997,7 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        label = (
-            "Por defecto" if monitor_name == "default" else f"Pantalla: {monitor_name}"
-        )
+        label = "Por defecto" if monitor_name == "default" else f"Pantalla: {monitor_name}"
         self.toast.show_message(
             f"Pantalla de lanzamiento guardada: {label}. Lanzadores regenerados."
         )
@@ -1089,18 +1019,12 @@ class ThatchLauncher(QMainWindow):
                     lines = f.readlines()
                 with open(log_path, "w", encoding="utf-8") as f:
                     for line in lines:
-                        if not (
-                            verb in line and line.strip().startswith("w_workaround")
-                        ):
+                        if not (verb in line and line.strip().startswith("w_workaround")):
                             f.write(line)
-                self.toast.show_message(
-                    f"Componente '{verb}' removido del registro de Winetricks."
-                )
+                self.toast.show_message(f"Componente '{verb}' removido del registro de Winetricks.")
                 self.refresh_data()
             except Exception as e:
-                QMessageBox.critical(
-                    self, "Error", f"Fallo al remover componente de log: {e}"
-                )
+                QMessageBox.critical(self, "Error", f"Fallo al remover componente de log: {e}")
 
     def _queue_winetricks_injections(self, prefix_name: str, verbs: list[str]) -> None:
         if not hasattr(self, "winetricks_queue"):
@@ -1151,9 +1075,7 @@ class ThatchLauncher(QMainWindow):
         q_env.insert("WINEDEBUG", "-all")
 
         if "WINEDLLOVERRIDES" in env:
-            q_env.insert(
-                "WINEDLLOVERRIDES", env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d"
-            )
+            q_env.insert("WINEDLLOVERRIDES", env["WINEDLLOVERRIDES"] + ";mscoree,mshtml=d")
         else:
             q_env.insert("WINEDLLOVERRIDES", "mscoree,mshtml=d")
 
@@ -1179,29 +1101,19 @@ class ThatchLauncher(QMainWindow):
             if Path(wine_exe).parent.name in ("bin", "files")
             else "wineserver"
         )
-        cmd_str = (
-            f'winetricks -q {verb}; "{wine_exe}" wineboot -u; "{wineserver_bin}" -w'
-        )
+        cmd_str = f'winetricks -q {verb}; "{wine_exe}" wineboot -u; "{wineserver_bin}" -w'
 
         self.process.start("bash", ["-c", cmd_str])
         self.console_dialog.show()
 
     def _on_winetricks_stdout(self) -> None:
         if self.process and self.console_dialog:
-            data = (
-                self.process.readAllStandardOutput()
-                .data()
-                .decode("utf-8", errors="ignore")
-            )
+            data = self.process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
             self.console_dialog.console.append(data)
 
     def _on_winetricks_stderr(self) -> None:
         if self.process and self.console_dialog:
-            data = (
-                self.process.readAllStandardError()
-                .data()
-                .decode("utf-8", errors="ignore")
-            )
+            data = self.process.readAllStandardError().data().decode("utf-8", errors="ignore")
             self.console_dialog.console.append(data)
 
     def _on_winetricks_error(self, error: QProcess.ProcessError) -> None:
@@ -1212,9 +1124,7 @@ class ThatchLauncher(QMainWindow):
             )
             self.console_dialog.btn_close.setEnabled(True)
 
-    def _on_winetricks_finished(
-        self, exit_code: int, prefix_name: str, verb: str
-    ) -> None:
+    def _on_winetricks_finished(self, exit_code: int, prefix_name: str, verb: str) -> None:
         if self.console_dialog:
             self.console_dialog.console.append(
                 f"\n✔ Winetricks process finished (code {exit_code})."
@@ -1282,9 +1192,7 @@ class ThatchLauncher(QMainWindow):
         if self.tray_icon and self.tray_icon.contextMenu():
             actions = self.tray_icon.contextMenu().actions()
             if len(actions) >= 2:
-                actions[0].setText(
-                    "Show Thatch" if ACTIVE_LANG == "en" else "Mostrar Thatch"
-                )
+                actions[0].setText("Show Thatch" if ACTIVE_LANG == "en" else "Mostrar Thatch")
                 actions[1].setText("Exit" if ACTIVE_LANG == "en" else "Salir")
 
         if self.chest_details_view.prefix_name:

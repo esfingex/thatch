@@ -1,9 +1,25 @@
+import re
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
 from database import ThatchDB
 from hardware import detect_performance_wrapper
 from core.wine import get_wine_env, get_wine_cmd
+from core.sandbox import detect_prefix_user, enforce_sandbox
+
+
+def clean_game_name(game_name: str) -> str:
+    """Sanitizes a game name for use in file names, .desktop ids and shell contexts.
+
+    Whitelist approach: only word characters and dashes survive, so registry
+    DisplayNames containing quotes, $, ;, backticks or newlines can neither
+    break nor weaponize the generated .sh launchers and .desktop files.
+    Unicode letters are preserved to stay compatible with previously generated
+    launcher file names for non-ASCII game titles.
+    """
+    cleaned = re.sub(r"[^\w-]+", "_", str(game_name).lower()).strip("_")
+    return cleaned or "game"
 
 
 def get_desktop_paths() -> list[Path]:
@@ -50,7 +66,7 @@ def extract_exe_icon(prefix_name: str, exe_path: Path, game_name: str) -> Path |
     Saves the PNG to ~/.local/share/icons/thatch/<prefix>/<clean_name>.png.
     Returns the Path if successful, else None.
     """
-    clean_name = game_name.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
+    clean_name = clean_game_name(game_name)
     icons_dir = Path.home() / ".local" / "share" / "icons" / "thatch" / prefix_name
     icons_dir.mkdir(parents=True, exist_ok=True)
     out_png = icons_dir / f"{clean_name}.png"
@@ -113,7 +129,7 @@ def generate_launcher(
     launchers_dir = prefix_path / "launchers"
     launchers_dir.mkdir(parents=True, exist_ok=True)
 
-    clean_name = game_name.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
+    clean_name = clean_game_name(game_name)
     sh_path = launchers_dir / f"{clean_name}.sh"
 
     env, runner_path = get_wine_env(
@@ -132,20 +148,17 @@ def generate_launcher(
     try:
         with open(sh_path, "w", encoding="utf-8") as f:
             f.write("#!/bin/bash\n")
-            f.write(f"# Lanzador directo de {game_name} generado por Thatch\n\n")
+            safe_comment = " ".join(str(game_name).split())
+            f.write(f"# Lanzador directo de {safe_comment} generado por Thatch\n\n")
 
             if target_monitor != "default":
-                f.write(
-                    'OLD_PRIMARY=$(xrandr --query | grep " primary" | cut -d" " -f1)\n'
-                )
-                f.write(f'TARGET_MONITOR="{target_monitor}"\n')
+                f.write('OLD_PRIMARY=$(xrandr --query | grep " primary" | cut -d" " -f1)\n')
+                f.write(f"TARGET_MONITOR={shlex.quote(str(target_monitor))}\n")
                 f.write(
                     'if [ -n "$TARGET_MONITOR" ] && [ "$TARGET_MONITOR" != "$OLD_PRIMARY" ]; then\n'
                 )
                 f.write('    xrandr --output "$TARGET_MONITOR" --primary\n')
-                f.write(
-                    '    trap "xrandr --output $OLD_PRIMARY --primary" EXIT INT TERM\n'
-                )
+                f.write('    trap "xrandr --output $OLD_PRIMARY --primary" EXIT INT TERM\n')
                 f.write("fi\n\n")
 
             clean_sys_path = "/usr/local/bin:/usr/bin:/bin"
@@ -159,26 +172,31 @@ def generate_launcher(
                 )
                 runner_bin = f"{bin_dir}:"
 
-            f.write(f'export WINEPREFIX="{env["WINEPREFIX"]}"\n')
-            f.write(f'export PATH="{runner_bin}{clean_sys_path}"\n')
+            f.write(f"export WINEPREFIX={shlex.quote(str(env['WINEPREFIX']))}\n")
+            f.write(f"export PATH={shlex.quote(runner_bin + clean_sys_path)}\n")
 
             if "LD_LIBRARY_PATH" in env:
-                f.write(f'export LD_LIBRARY_PATH="{env["LD_LIBRARY_PATH"]}"\n')
-            f.write(f'export WINETRICKS_CACHE="{env["WINETRICKS_CACHE"]}"\n')
+                f.write(f"export LD_LIBRARY_PATH={shlex.quote(env['LD_LIBRARY_PATH'])}\n")
+            f.write(f"export WINETRICKS_CACHE={shlex.quote(str(env['WINETRICKS_CACHE']))}\n")
 
             recipe = recipes.get(game_info.get("recipe_id", "default_gaming"), {})
             perf_env = recipe.get("performance_env", {})
             for k, v in perf_env.items():
-                f.write(f'export {k}="{v}"\n')
+                if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(k)):
+                    print(f"[Launcher Error] Skipping unsafe env key from recipe: {k!r}")
+                    continue
+                f.write(f"export {k}={shlex.quote(str(v))}\n")
 
             sandbox_enabled = bool(game_info.get("sandbox", False))
             if sandbox_enabled:
-                f.write(
-                    "\n# Zeus Sandbox Isolation: Restrict disk and user folders access\n"
-                )
+                # Lock immediately at generation time (not only at launch) and
+                # emit the self-healing runtime block with the REAL prefix user.
+                enforce_sandbox(prefix_path)
+                win_user = detect_prefix_user(prefix_path).replace('"', "").replace("\\", "")
+                f.write("\n# Zeus Sandbox Isolation: Restrict disk and user folders access\n")
                 f.write('if [ -d "$WINEPREFIX/dosdevices" ]; then\n')
                 f.write('    rm -f "$WINEPREFIX/dosdevices/z:"\n')
-                f.write('    user_dir="$WINEPREFIX/drive_c/users/steamuser"\n')
+                f.write(f'    user_dir="$WINEPREFIX/drive_c/users/{win_user}"\n')
                 f.write('    if [ -d "$user_dir" ]; then\n')
                 f.write(
                     '        for folder in "Desktop" "Documents" "Downloads" "Music" "Pictures" "Videos"; do\n'
@@ -203,20 +221,25 @@ def generate_launcher(
                 relative_exe = f"{exe_file.parent.name}/{exe_file.name}"
 
             f.write(
-                f'\n# Entrar al directorio de trabajo del juego\ncd "{game_dir}"\n\n'
+                f"\n# Entrar al directorio de trabajo del juego\n"
+                f"cd {shlex.quote(str(game_dir))}\n\n"
             )
 
             wrappers = detect_performance_wrapper()
-            wrapper_str = " ".join(wrappers) + " " if wrappers else ""
+            wrapper_str = "".join(shlex.quote(w) + " " for w in wrappers)
 
             vd_enabled = bool(game_info.get("virtual_desktop", False))
             vd_res = game_info.get("virtual_desktop_res", "1920x1080")
             if vd_enabled:
                 f.write(
-                    f'{wrapper_str}"{wine_cmd}" explorer /desktop=Thatch,{vd_res} "{relative_exe}" "$@"\n'
+                    f"{wrapper_str}{shlex.quote(str(wine_cmd))} explorer "
+                    f"/desktop=Thatch,{shlex.quote(str(vd_res))} "
+                    f'{shlex.quote(relative_exe)} "$@"\n'
                 )
             else:
-                f.write(f'{wrapper_str}"{wine_cmd}" "{relative_exe}" "$@"\n')
+                f.write(
+                    f'{wrapper_str}{shlex.quote(str(wine_cmd))} {shlex.quote(relative_exe)} "$@"\n'
+                )
 
         sh_path.chmod(0o755)
 
@@ -248,9 +271,7 @@ def generate_launcher(
                     f.write(desktop_content)
                 target_desk_shortcut.chmod(0o755)
             except Exception as desk_err:
-                print(
-                    f"[Desktop Shortcut Error] Failed to write to {desk_p.name}: {desk_err}"
-                )
+                print(f"[Desktop Shortcut Error] Failed to write to {desk_p.name}: {desk_err}")
 
         refresh_desktop_database()
 
@@ -260,7 +281,7 @@ def generate_launcher(
 
 def remove_launcher(db: ThatchDB, prefix_name: str, game_name: str) -> None:
     """Removes the launcher script (.sh) and desk shortcut (.desktop) cleanly from the system."""
-    clean_name = game_name.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
+    clean_name = clean_game_name(game_name)
 
     desktop_dir = Path.home() / ".local" / "share" / "applications"
     if desktop_dir.exists():
@@ -269,9 +290,7 @@ def remove_launcher(db: ThatchDB, prefix_name: str, game_name: str) -> None:
             try:
                 dt_file.unlink()
             except Exception as e:
-                print(
-                    f"[Launcher Cleanup] Failed to remove desktop file {dt_file.name}: {e}"
-                )
+                print(f"[Launcher Cleanup] Failed to remove desktop file {dt_file.name}: {e}")
 
     for desk_p in get_desktop_paths():
         target_pattern = f"thatch-{prefix_name}-{clean_name}*.desktop"
@@ -304,7 +323,7 @@ def cleanup_orphaned_launchers(db: ThatchDB) -> int:
     valid_desktop_files = set()
     for gname, ginfo in existing_games.items():
         pname = ginfo.get("prefix", "")
-        cname = gname.lower().replace(" ", "_").replace("/", "_").replace(".", "_")
+        cname = clean_game_name(gname)
         valid_desktop_files.add(f"thatch-{pname}-{cname}.desktop")
 
     removed_count = 0
@@ -323,9 +342,7 @@ def cleanup_orphaned_launchers(db: ThatchDB) -> int:
                     dt_file.unlink()
                     removed_count += 1
                 except Exception as e:
-                    print(
-                        f"[Orphan Cleanup] Failed to remove desktop shortcut {dt_file.name}: {e}"
-                    )
+                    print(f"[Orphan Cleanup] Failed to remove desktop shortcut {dt_file.name}: {e}")
 
     if removed_count > 0:
         refresh_desktop_database()

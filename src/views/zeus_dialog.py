@@ -61,12 +61,8 @@ class ZeusInstallerDialog(QDialog):
 
         # Setup.exe selector
         setup_lay = QHBoxLayout()
-        self.lbl_setup = QLabel(
-            prefilled_setup if prefilled_setup else "Sin seleccionar"
-        )
-        self.lbl_setup.setStyleSheet(
-            "font-family: monospace; font-size: 11px; color: #a0a0a0;"
-        )
+        self.lbl_setup = QLabel(prefilled_setup if prefilled_setup else "Sin seleccionar")
+        self.lbl_setup.setStyleSheet("font-family: monospace; font-size: 11px; color: #a0a0a0;")
         btn_browse = QPushButton("Examinar")
         btn_browse.setObjectName("BlueBtn")
         btn_browse.clicked.connect(self._browse_setup)
@@ -78,9 +74,7 @@ class ZeusInstallerDialog(QDialog):
         self.prefix_mode_group = QButtonGroup(self)
         self.radio_new_env = QRadioButton("Crear nuevo prefijo aislado desde receta")
         self.radio_new_env.setChecked(True)
-        self.radio_existing_env = QRadioButton(
-            "Instalar en un prefijo compartido existente"
-        )
+        self.radio_existing_env = QRadioButton("Instalar en un prefijo compartido existente")
         self.prefix_mode_group.addButton(self.radio_new_env)
         self.prefix_mode_group.addButton(self.radio_existing_env)
 
@@ -195,7 +189,9 @@ class ZeusInstallerDialog(QDialog):
         if self.parent() and hasattr(self.parent(), "details_pane"):
             selected_runner = self.parent().details_pane.combo_runners.currentText()
 
-        if selected_runner == "Wine del Sistema (/usr/bin/wine)" and hasattr(self.parent(), "_get_runners_list"):
+        if selected_runner == "Wine del Sistema (/usr/bin/wine)" and hasattr(
+            self.parent(), "_get_runners_list"
+        ):
             runners = self.parent()._get_runners_list()
             for r in runners:
                 if any(k in r.lower() for k in ("proton", "ge", "lutris")):
@@ -224,9 +220,7 @@ class ZeusInstallerDialog(QDialog):
             )
 
             env["PATH"] = f"{bin_dir}:{env.get('PATH', '')}"
-            env["LD_LIBRARY_PATH"] = (
-                f"{lib_dir}:{lib64_dir}:{env.get('LD_LIBRARY_PATH', '')}"
-            )
+            env["LD_LIBRARY_PATH"] = f"{lib_dir}:{lib64_dir}:{env.get('LD_LIBRARY_PATH', '')}"
             wine_cmd = str(bin_dir / "wine")
 
         self.is_isolated = self.radio_new_env.isChecked()
@@ -270,9 +264,7 @@ class ZeusInstallerDialog(QDialog):
         except Exception as e:
             self.console.append(f":: [ZEUS-ENGINE] Advertencia al mapear Unidad D: {e}")
 
-        self.console.append(
-            ":: [ZEUS-ENGINE] Lanzando instalador setup.exe en modo asíncrono..."
-        )
+        self.console.append(":: [ZEUS-ENGINE] Lanzando instalador setup.exe en modo asíncrono...")
         self.console.append(
             ":: [ZEUS-ENGINE] IMPORTANTE: Si estás en modo aislado, instala en la ruta por defecto: C:\\Games\\"
         )
@@ -280,9 +272,7 @@ class ZeusInstallerDialog(QDialog):
         self.before_subdirs = set()
         self.games_dir = self.prefix_path / "drive_c" / "Games"
         if not self.is_isolated and self.games_dir.exists():
-            self.before_subdirs = {
-                d.name for d in self.games_dir.iterdir() if d.is_dir()
-            }
+            self.before_subdirs = {d.name for d in self.games_dir.iterdir() if d.is_dir()}
 
         self.process = QProcess()
         q_env = QProcessEnvironment()
@@ -301,28 +291,18 @@ class ZeusInstallerDialog(QDialog):
     @Slot()
     def _on_stdout(self) -> None:
         if self.process:
-            data = (
-                self.process.readAllStandardOutput()
-                .data()
-                .decode("utf-8", errors="ignore")
-            )
+            data = self.process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
             self.console.append(data)
 
     @Slot()
     def _on_stderr(self) -> None:
         if self.process:
-            data = (
-                self.process.readAllStandardError()
-                .data()
-                .decode("utf-8", errors="ignore")
-            )
+            data = self.process.readAllStandardError().data().decode("utf-8", errors="ignore")
             self.console.append(data)
 
     @Slot(int, QProcess.ExitStatus)
     def _on_finished(self, exit_code: int, exit_status: QProcess.ExitStatus) -> None:
-        self.console.append(
-            f"\n:: [ZEUS-ENGINE] Instalador finalizado con código: {exit_code}"
-        )
+        self.console.append(f"\n:: [ZEUS-ENGINE] Instalador finalizado con código: {exit_code}")
         recipe = self.recipes.get(self.recipe_id, {})
 
         if self.is_isolated:
@@ -346,8 +326,7 @@ class ZeusInstallerDialog(QDialog):
                 )
 
                 final_prefix_dir = (
-                    self.db.get_prefixes_dir()
-                    / self.target_folder_name.replace(" ", "_").lower()
+                    self.db.get_prefixes_dir() / self.target_folder_name.replace(" ", "_").lower()
                 )
                 if final_prefix_dir.exists():
                     shutil.rmtree(final_prefix_dir, ignore_errors=True)
@@ -358,19 +337,12 @@ class ZeusInstallerDialog(QDialog):
 
                 try:
                     shutil.move(str(self.prefix_path), str(final_prefix_dir))
-                    self.console.append(
-                        ":: [ZEUS-ENGINE] ¡Migración del prefijo completa exitosa!"
-                    )
+                    self.console.append(":: [ZEUS-ENGINE] ¡Migración del prefijo completa exitosa!")
 
-                    migrated_game_path = (
-                        final_prefix_dir / "drive_c" / "Games" / install_dir.name
-                    )
+                    migrated_game_path = final_prefix_dir / "drive_c" / "Games" / install_dir.name
                     if not migrated_game_path.exists():
                         migrated_game_path = (
-                            final_prefix_dir
-                            / "drive_c"
-                            / "GOG Games"
-                            / install_dir.name
+                            final_prefix_dir / "drive_c" / "GOG Games" / install_dir.name
                         )
 
                     # Find EXE
@@ -435,12 +407,8 @@ class ZeusInstallerDialog(QDialog):
                         )
                     self.accept()
                 except Exception as e:
-                    self.console.append(
-                        f"❌ [ZEUS-ENGINE] Error durante migración: {e}"
-                    )
-                    QMessageBox.critical(
-                        self, "Error", f"Fallo al migrar archivos: {e}"
-                    )
+                    self.console.append(f"❌ [ZEUS-ENGINE] Error durante migración: {e}")
+                    QMessageBox.critical(self, "Error", f"Fallo al migrar archivos: {e}")
             else:
                 self.console.append(
                     "❌ [ZEUS-ENGINE] AVISO: No se detectó carpeta instalada. ¿Se canceló la instalación?"
@@ -490,8 +458,7 @@ class ZeusInstallerDialog(QDialog):
                     self.db.add_game(
                         name=self.target_folder_name,
                         exe=str(game_exe),
-                        runner=self.db.get_default_runner()
-                        or "Wine del Sistema (/usr/bin/wine)",
+                        runner=self.db.get_default_runner() or "Wine del Sistema (/usr/bin/wine)",
                         prefix=self.prefix_path.name,
                         recipe_id=self.recipe_id,
                     )
@@ -505,9 +472,7 @@ class ZeusInstallerDialog(QDialog):
                 parent_launcher = self.parent()
                 installed_verbs = []
                 if parent_launcher and hasattr(parent_launcher, "get_installed_verbs"):
-                    installed_verbs = parent_launcher.get_installed_verbs(
-                        self.prefix_path.name
-                    )
+                    installed_verbs = parent_launcher.get_installed_verbs(self.prefix_path.name)
 
                 missing = [v for v in required_verbs if v not in installed_verbs]
                 auto_install = False
@@ -559,9 +524,7 @@ class ZeusInstallerDialog(QDialog):
         if d_drive.is_symlink() or d_drive.exists():
             try:
                 d_drive.unlink()
-                self.console.append(
-                    ":: [ZEUS-ENGINE] Unidad D: virtual desmontada y eliminada."
-                )
+                self.console.append(":: [ZEUS-ENGINE] Unidad D: virtual desmontada y eliminada.")
             except Exception:
                 pass
 
@@ -569,8 +532,7 @@ class ZeusInstallerDialog(QDialog):
         prefixes_to_lock = [self.prefix_path]
         if self.is_isolated:
             final_prefix_dir = (
-                self.db.get_prefixes_dir()
-                / self.target_folder_name.replace(" ", "_").lower()
+                self.db.get_prefixes_dir() / self.target_folder_name.replace(" ", "_").lower()
             )
             prefixes_to_lock.append(final_prefix_dir)
 
@@ -582,20 +544,15 @@ class ZeusInstallerDialog(QDialog):
                     associated_game = ginfo
                     break
             sandbox_enabled = (
-                bool(associated_game.get("sandbox", False))
-                if associated_game
-                else False
+                bool(associated_game.get("sandbox", False)) if associated_game else False
             )
 
             if sandbox_enabled:
-                z_drive = prefix / "dosdevices" / "z:"
-                if z_drive.is_symlink() or z_drive.exists():
-                    try:
-                        z_drive.unlink()
-                        self.console.append(
-                            f":: [ZEUS-ENGINE] Sandbox re-bloqueado con éxito para: {prefix.name}"
-                        )
-                    except Exception:
-                        pass
+                from core.sandbox import enforce_sandbox
+
+                enforce_sandbox(prefix)
+                self.console.append(
+                    f":: [ZEUS-ENGINE] Sandbox re-bloqueado con éxito para: {prefix.name}"
+                )
 
         self.btn_launch.setEnabled(True)
