@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QWidget,
 )
-from i18n import ACTIVE_LANG
+from i18n import _
 
 
 class WinetricksConsoleDialog(QDialog):
@@ -19,14 +19,14 @@ class WinetricksConsoleDialog(QDialog):
 
     def __init__(self, verb: str, prefix: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(f"Injecting {verb} into {prefix}")
+        self.setWindowTitle(_("wt_title", verb=verb, prefix=prefix))
         self.resize(500, 360)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
-        lbl_info = QLabel(f"Installing component: <b>{verb}</b>")
+        lbl_info = QLabel(_("wt_installing", verb=verb))
         lbl_info.setStyleSheet("color: #ffffff; font-size: 13px;")
         layout.addWidget(lbl_info)
 
@@ -35,7 +35,7 @@ class WinetricksConsoleDialog(QDialog):
         self.console.setReadOnly(True)
         layout.addWidget(self.console)
 
-        self.btn_close = QPushButton("Close")
+        self.btn_close = QPushButton(_("wt_close"))
         self.btn_close.setEnabled(False)
         self.btn_close.clicked.connect(self.accept)
         layout.addWidget(self.btn_close)
@@ -53,11 +53,7 @@ def scan_winetricks_catalog_bg(
     def bg_loader():
         if not shutil.which("winetricks"):
             if not silent:
-                on_error_signal.emit(
-                    "Error: 'winetricks' is not installed."
-                    if ACTIVE_LANG == "en"
-                    else "Error: 'winetricks' no está instalado en el sistema."
-                )
+                on_error_signal.emit(_("wt_error_not_installed"))
             return
 
         category_commands = [

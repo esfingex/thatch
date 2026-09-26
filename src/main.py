@@ -21,7 +21,7 @@ from PySide6.QtGui import QIcon, QAction
 from database import ThatchDB
 from hardware import detect_gpu
 from desktop_integration import update_system_context_menu
-from i18n import _, ACTIVE_LANG
+from i18n import _
 
 # Import modular views package
 from views import (
@@ -93,8 +93,8 @@ class ThatchLauncher(QMainWindow):
             self.tray_icon.setIcon(QIcon(pixmap))
 
             tray_menu = QMenu()
-            show_title = "Show Thatch" if ACTIVE_LANG == "en" else "Mostrar Thatch"
-            quit_title = "Exit" if ACTIVE_LANG == "en" else "Salir"
+            show_title = _("main_tray_show")
+            quit_title = _("main_tray_exit")
 
             show_action = QAction(show_title, self)
             show_action.triggered.connect(self.showNormal)
@@ -452,12 +452,10 @@ class ThatchLauncher(QMainWindow):
         env, runner_path = self.get_wine_env(name, recipe_id, runner_name)
         wine_exe = self._get_wine_cmd(runner_path)
 
-        self.toast.show_message(f"Creando e inicializando contenedor de Wine para '{name}'...")
+        self.toast.show_message(_("main_toast_creating_chest", name=name))
 
-        self.console_dialog = core.WinetricksConsoleDialog(
-            "wineboot (Inicialización de Sistema)", name, self
-        )
-        self.console_dialog.setWindowTitle(f"Creating Chest: {name}")
+        self.console_dialog = core.WinetricksConsoleDialog(_("main_wineboot_label"), name, self)
+        self.console_dialog.setWindowTitle(_("main_creating_chest_title", name=name))
 
         self.process = QProcess()
         self.process.readyReadStandardOutput.connect(self._on_winetricks_stdout)
@@ -505,27 +503,25 @@ class ThatchLauncher(QMainWindow):
     def _on_chest_init_error(self, error: QProcess.ProcessError, name: str) -> None:
         print(f"[ChestInit Error] QProcess failed for '{name}': {error}")
         if self.console_dialog:
-            self.console_dialog.console.append(
-                f"\n❌ ERROR: System initialization process failed to launch: {error}"
-            )
+            self.console_dialog.console.append(_("main_init_error_console", error=error))
             self.console_dialog.btn_close.setEnabled(True)
 
     def _on_chest_init_finished(self, exit_code: int, name: str) -> None:
         if self.console_dialog:
             self.console_dialog.console.append(
-                f"\n✔ Chest system initialization finished (code {exit_code})."
+                _("main_init_finished_console", exit_code=exit_code)
             )
             self.console_dialog.btn_close.setEnabled(True)
 
         if exit_code == 0:
-            self.toast.show_message(f"¡Contenedor '{name}' creado con éxito!")
+            self.toast.show_message(_("main_toast_chest_created", name=name))
             self.refresh_data()
             self._on_chest_selected(name)
         else:
             QMessageBox.warning(
                 self,
-                "Advertencia de Inicialización",
-                f"El contenedor '{name}' fue creado pero el proceso wineboot finalizó con código {exit_code}.",
+                _("main_init_warning_title"),
+                _("main_init_warning_msg", name=name, exit_code=exit_code),
             )
 
     @Slot(str)
@@ -563,9 +559,7 @@ class ThatchLauncher(QMainWindow):
         if game_to_run:
             self._on_chest_run_program(prefix_name, game_to_run)
         else:
-            self.toast.show_message(
-                f"Contenedor '{prefix_name}': Añade un ejecutable usando 'Reclutar Juego'."
-            )
+            self.toast.show_message(_("main_toast_add_exe", prefix_name=prefix_name))
 
     @Slot(str)
     def _on_chest_browse(self, prefix_name: str) -> None:
@@ -577,7 +571,9 @@ class ThatchLauncher(QMainWindow):
         try:
             subprocess.Popen(["xdg-open", str(drive_c)])
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Fallo al abrir carpeta: {e}")
+            QMessageBox.critical(
+                self, _("main_error_title"), _("main_error_open_folder", error=e)
+            )
 
     @Slot(str)
     def _on_chest_terminal(self, prefix_name: str) -> None:
@@ -602,7 +598,9 @@ class ThatchLauncher(QMainWindow):
                 subprocess.Popen(["gnome-terminal", "--", "bash", "-c", sh_cmd])
         except Exception as e:
             QMessageBox.critical(
-                self, "Error Terminal", f"Fallo al abrir terminal '{default_term}': {e}"
+                self,
+                _("main_error_terminal_title"),
+                _("main_error_terminal_msg", terminal=default_term, error=e),
             )
 
     @Slot(str)
@@ -611,8 +609,8 @@ class ThatchLauncher(QMainWindow):
 
         new_name, ok = QInputDialog.getText(
             self,
-            "Renombrar Cofre",
-            f"Introduce el nuevo nombre para el cofre '{prefix_name}':",
+            _("main_rename_title"),
+            _("main_rename_msg", prefix_name=prefix_name),
             QLineEdit.Normal,
             prefix_name,
         )
@@ -625,20 +623,20 @@ class ThatchLauncher(QMainWindow):
                 self.refresh_data()
                 self.update_system_context_menu()
                 self._on_chest_selected(clean_new)
-                self.toast.show_message(f"¡Cofre renombrado exitosamente a '{clean_new}'!")
+                self.toast.show_message(_("main_toast_renamed", name=clean_new))
             else:
                 QMessageBox.warning(
                     self,
-                    "Error de Renombrado",
-                    f"No se pudo renombrar el cofre a '{clean_new}'. Verifica que el nombre no exista ya.",
+                    _("main_rename_failed_title"),
+                    _("main_rename_failed_msg", name=clean_new),
                 )
 
     @Slot(str)
     def _on_chest_delete(self, prefix_name: str) -> None:
         confirm = QMessageBox.question(
             self,
-            "Eliminar Contenedor",
-            f"¿Seguro que deseas eliminar el contenedor '{prefix_name}'?\nEsto eliminará permanentemente la carpeta del prefijo.",
+            _("main_delete_title"),
+            _("main_delete_msg", prefix_name=prefix_name),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -664,7 +662,7 @@ class ThatchLauncher(QMainWindow):
 
             self.refresh_data()
             self._on_sidebar_view_changed("chests")
-            self.toast.show_message(f"Contenedor '{prefix_name}' eliminado con éxito.")
+            self.toast.show_message(_("main_toast_deleted", prefix_name=prefix_name))
 
     def _get_chest_recipe_id(self, prefix_name: str) -> str:
         for ginfo in self.db.list_games().values():
@@ -679,9 +677,9 @@ class ThatchLauncher(QMainWindow):
         else:
             drive_c = self.db.get_prefixes_dir() / prefix_name / "drive_c"
             start_dir = str(drive_c) if drive_c.exists() else ""
-            path, _ = QFileDialog.getOpenFileName(
+            path, _filter = QFileDialog.getOpenFileName(
                 self,
-                "Reclutar Juego (.exe)",
+                _("main_recruit_dialog_title"),
                 start_dir,
                 "Executables (*.exe)",
             )
@@ -690,8 +688,8 @@ class ThatchLauncher(QMainWindow):
             exe_file = Path(path)
             game_name, ok = QInputDialog.getText(
                 self,
-                "Nombre del Juego",
-                "Ingresa el nombre para mostrar en la biblioteca:",
+                _("main_game_name_title"),
+                _("main_game_name_msg"),
                 QLineEdit.Normal,
                 exe_file.stem.replace("_", " ").title(),
             )
@@ -712,16 +710,14 @@ class ThatchLauncher(QMainWindow):
                 icon_path = self._extract_exe_icon(prefix_name, exe_file, clean_game_name)
                 self.generate_launcher(prefix_name, clean_game_name, icon_path)
                 self.refresh_data()
-                self.toast.show_message(
-                    f"¡Juego '{clean_game_name}' reclutado y lanzador generado con éxito!"
-                )
+                self.toast.show_message(_("main_toast_recruited", name=clean_game_name))
 
     @Slot(str, str)
     def _on_chest_remove_link(self, prefix_name: str, game_name: str) -> None:
         confirm = QMessageBox.question(
             self,
-            "Desvincular Juego",
-            f"¿Deseas desvincular '{game_name}' de Thatch?\n\nLos archivos instalados en C:\\ NO se borrarán.",
+            _("main_unlink_title"),
+            _("main_unlink_msg", game_name=game_name),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -729,7 +725,7 @@ class ThatchLauncher(QMainWindow):
             self.remove_launcher(prefix_name, game_name)
             self.db.remove_game(game_name)
             self.refresh_data()
-            self.toast.show_message(f"Juego '{game_name}' desvinculado.")
+            self.toast.show_message(_("main_toast_unlinked", game_name=game_name))
 
     @Slot(str, str)
     def _on_chest_remove_program(self, prefix_name: str, game_name: str) -> None:
@@ -739,8 +735,8 @@ class ThatchLauncher(QMainWindow):
 
         confirm = QMessageBox.question(
             self,
-            "Desinstalar Programa",
-            f"¿Deseas intentar ejecutar el desinstalador de '{game_name}' y eliminar sus accesos directos?",
+            _("main_uninstall_title"),
+            _("main_uninstall_msg", game_name=game_name),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
@@ -765,24 +761,24 @@ class ThatchLauncher(QMainWindow):
                     p_env = dict(sys.environ)
                     p_env.update(env)
                     subprocess.Popen(f'"{wine_cmd}" {uninst_str}', shell=True, env=p_env)
-                    self.toast.show_message(f"Ejecutando desinstalador de '{game_name}'...")
+                    self.toast.show_message(_("main_toast_uninstalling", game_name=game_name))
                 except Exception as e:
-                    self.toast.show_message(f"Error al ejecutar desinstalador: {e}")
+                    self.toast.show_message(_("main_toast_uninstall_error", error=e))
 
             self.remove_launcher(prefix_name, game_name)
             self.db.remove_game(game_name)
             self.refresh_data()
             self.toast.show_message(
-                f"¡Programa '{game_name}' desinstalado y lanzadores eliminados!"
+                _("main_toast_uninstalled", game_name=game_name)
             )
 
     @Slot()
     def _on_manual_cleanup_orphans(self) -> None:
         count = self.cleanup_orphaned_launchers()
         if count > 0:
-            self.toast.show_message(f"¡Se limpiaron {count} accesos directos huérfanos del panel!")
+            self.toast.show_message(_("main_toast_orphans_cleaned", count=count))
         else:
-            self.toast.show_message("No se encontraron accesos directos huérfanos.")
+            self.toast.show_message(_("main_toast_no_orphans"))
 
     @Slot()
     def register_context_menu(self) -> None:
@@ -791,14 +787,14 @@ class ThatchLauncher(QMainWindow):
         if success:
             self.toast.show_message(_("toast_context_menu_registered"))
         else:
-            self.toast.show_message("Error al registrar menú contextual.")
+            self.toast.show_message(_("main_toast_context_menu_failed"))
 
     @Slot(str, str)
     def _on_link_registry_program(self, prefix_name: str, app_id: str) -> None:
         reg_programs = self.get_wine_installed_programs(prefix_name)
         target_app = next((p for p in reg_programs if p["id"] == app_id), None)
         if not target_app:
-            self.toast.show_message("Error: Programa no encontrado en el registro.")
+            self.toast.show_message(_("main_toast_reg_program_missing"))
             return
 
         game_name = target_app["name"]
@@ -812,9 +808,9 @@ class ThatchLauncher(QMainWindow):
                 and Path(target_app["install_location"]).exists()
                 else str(drive_c)
             )
-            path, _ = QFileDialog.getOpenFileName(
+            path, _filter = QFileDialog.getOpenFileName(
                 self,
-                f"Seleccionar ejecutable para {game_name}",
+                _("main_select_exe_title", game_name=game_name),
                 start_dir,
                 "Executables (*.exe)",
             )
@@ -837,21 +833,21 @@ class ThatchLauncher(QMainWindow):
             icon_path = self._extract_exe_icon(prefix_name, detected_exe, game_name)
             self.generate_launcher(prefix_name, game_name, icon_path)
             self.refresh_data()
-            self.toast.show_message(f"¡'{game_name}' vinculado y lanzador generado con éxito!")
+            self.toast.show_message(_("main_toast_linked", game_name=game_name))
 
     @Slot(str, str)
     def _on_chest_run_program(self, prefix_name: str, game_name: str) -> None:
         game_info = self.db.get_game(game_name)
         if not game_info:
-            self.toast.show_message(f"Error: Juego '{game_name}' no encontrado.")
+            self.toast.show_message(_("main_toast_game_missing", game_name=game_name))
             return
 
         exe_path = Path(game_info.get("exe", ""))
         if not exe_path.exists():
             QMessageBox.warning(
                 self,
-                "Ejecutable no encontrado",
-                f"El ejecutable del juego no existe en:\n{exe_path}\n\nVerifica si la carpeta del juego fue movida.",
+                _("main_exe_missing_title"),
+                _("main_exe_missing_msg", exe_path=exe_path),
             )
             return
 
@@ -901,9 +897,11 @@ class ThatchLauncher(QMainWindow):
 
                 subprocess.Popen(cmd_str, shell=True, env=p_env)
 
-            self.toast.show_message(f"Lanzando '{game_name}'...")
+            self.toast.show_message(_("main_toast_launching", game_name=game_name))
         except Exception as e:
-            QMessageBox.critical(self, "Error de Ejecución", f"Fallo al iniciar el juego: {e}")
+            QMessageBox.critical(
+                self, _("main_run_error_title"), _("main_run_error_msg", error=e)
+            )
 
     # ─── CHEST SETTINGS & CONFIGURATION SLOTS ─────────────────────────────────
 
@@ -924,7 +922,9 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        self.toast.show_message(f"Motor de Wine para '{prefix_name}' actualizado a: {runner_name}")
+        self.toast.show_message(
+            _("main_toast_runner_changed", prefix_name=prefix_name, runner_name=runner_name)
+        )
 
     @Slot(str, str, bool)
     def _on_chest_perf_settings_changed(
@@ -946,7 +946,7 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        self.toast.show_message(f"Ajustes de rendimiento y sandbox para '{prefix_name}' guardados.")
+        self.toast.show_message(_("main_toast_perf_saved", prefix_name=prefix_name))
 
     @Slot(str, bool, str)
     def _on_chest_virtual_desktop_changed(
@@ -968,8 +968,10 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        status = "activado" if enabled else "desactivado"
-        self.toast.show_message(f"Escritorio Virtual para '{prefix_name}' {status} ({resolution}).")
+        status = _("main_vd_on") if enabled else _("main_vd_off")
+        self.toast.show_message(
+            _("main_toast_vd", prefix_name=prefix_name, status=status, resolution=resolution)
+        )
 
     @Slot(str, int)
     def _on_chest_dpi_scale_changed(self, prefix_name: str, dpi_val: int) -> None:
@@ -978,7 +980,9 @@ class ThatchLauncher(QMainWindow):
             if ginfo.get("prefix") == prefix_name:
                 ginfo["dpi_scale"] = dpi_val
         self.db.save()
-        self.toast.show_message(f"Escala DPI para '{prefix_name}' guardada ({dpi_val} DPI).")
+        self.toast.show_message(
+            _("main_toast_dpi_saved", prefix_name=prefix_name, dpi_val=dpi_val)
+        )
 
     @Slot(str, str)
     def _on_chest_monitor_changed(self, prefix_name: str, monitor_name: str) -> None:
@@ -997,10 +1001,12 @@ class ThatchLauncher(QMainWindow):
                 )
                 self.generate_launcher(prefix_name, gname, icon_path)
         self.db.save()
-        label = "Por defecto" if monitor_name == "default" else f"Pantalla: {monitor_name}"
-        self.toast.show_message(
-            f"Pantalla de lanzamiento guardada: {label}. Lanzadores regenerados."
+        label = (
+            _("main_monitor_default")
+            if monitor_name == "default"
+            else _("main_monitor_label", monitor_name=monitor_name)
         )
+        self.toast.show_message(_("main_toast_monitor_saved", label=label))
 
     # ─── WINETRICKS DEPENDENCY INJECTIONS ──────────────────────────────────────
 
@@ -1021,10 +1027,12 @@ class ThatchLauncher(QMainWindow):
                     for line in lines:
                         if not (verb in line and line.strip().startswith("w_workaround")):
                             f.write(line)
-                self.toast.show_message(f"Componente '{verb}' removido del registro de Winetricks.")
+                self.toast.show_message(_("main_toast_verb_removed", verb=verb))
                 self.refresh_data()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Fallo al remover componente de log: {e}")
+                QMessageBox.critical(
+                    self, _("main_error_title"), _("main_error_remove_verb_log", error=e)
+                )
 
     def _queue_winetricks_injections(self, prefix_name: str, verbs: list[str]) -> None:
         if not hasattr(self, "winetricks_queue"):
@@ -1091,8 +1099,8 @@ class ThatchLauncher(QMainWindow):
         if not shutil.which("winetricks"):
             QMessageBox.critical(
                 self,
-                "Error",
-                "No se encontró 'winetricks' instalado en el sistema Linux host.",
+                _("main_error_title"),
+                _("main_error_no_winetricks"),
             )
             return
 
@@ -1119,27 +1127,25 @@ class ThatchLauncher(QMainWindow):
     def _on_winetricks_error(self, error: QProcess.ProcessError) -> None:
         print(f"[Winetricks Error] QProcess failed: {error}")
         if self.console_dialog:
-            self.console_dialog.console.append(
-                f"\n❌ ERROR: Winetricks process failed to launch: {error}"
-            )
+            self.console_dialog.console.append(_("main_wt_error_console", error=error))
             self.console_dialog.btn_close.setEnabled(True)
 
     def _on_winetricks_finished(self, exit_code: int, prefix_name: str, verb: str) -> None:
         if self.console_dialog:
             self.console_dialog.console.append(
-                f"\n✔ Winetricks process finished (code {exit_code})."
+                _("main_wt_finished_console", exit_code=exit_code)
             )
             self.console_dialog.btn_close.setEnabled(True)
 
         if exit_code == 0:
             self.register_installed_verb(prefix_name, verb)
-            self.toast.show_message(f"¡Componente '{verb}' inyectado con éxito!")
+            self.toast.show_message(_("main_toast_verb_injected", verb=verb))
             self.refresh_data()
         else:
             QMessageBox.warning(
                 self,
-                "Inyección Fallida",
-                f"Winetricks finalizó con código {exit_code} al instalar '{verb}'.",
+                _("main_injection_failed_title"),
+                _("main_injection_failed_msg", exit_code=exit_code, verb=verb),
             )
 
         if getattr(self, "winetricks_queue", None):
@@ -1154,7 +1160,7 @@ class ThatchLauncher(QMainWindow):
 
         if not verbs:
             self.toast.show_message(
-                f"La receta '{recipe.get('display_name', recipe_id)}' no requiere componentes adicionales de winetricks."
+                _("main_toast_no_verbs", recipe_name=recipe.get("display_name", recipe_id))
             )
             return
 
@@ -1163,7 +1169,11 @@ class ThatchLauncher(QMainWindow):
 
         if not to_install:
             self.toast.show_message(
-                f"Todos los componentes de '{recipe.get('display_name', recipe_id)}' ya están instalados en '{prefix_name}'."
+                _(
+                    "main_toast_verbs_installed",
+                    recipe_name=recipe.get("display_name", recipe_id),
+                    prefix_name=prefix_name,
+                )
             )
             return
 
@@ -1192,8 +1202,8 @@ class ThatchLauncher(QMainWindow):
         if self.tray_icon and self.tray_icon.contextMenu():
             actions = self.tray_icon.contextMenu().actions()
             if len(actions) >= 2:
-                actions[0].setText("Show Thatch" if ACTIVE_LANG == "en" else "Mostrar Thatch")
-                actions[1].setText("Exit" if ACTIVE_LANG == "en" else "Salir")
+                actions[0].setText(_("main_tray_show"))
+                actions[1].setText(_("main_tray_exit"))
 
         if self.chest_details_view.prefix_name:
             if hasattr(self.sidebar, "btn_chest_details"):

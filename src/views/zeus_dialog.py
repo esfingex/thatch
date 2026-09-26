@@ -22,6 +22,7 @@ from PySide6.QtCore import Slot, Signal, QProcess, QProcessEnvironment
 
 from database import ThatchDB
 from hardware import compile_performance_env
+from i18n import _
 
 
 class ZeusInstallerDialog(QDialog):
@@ -54,62 +55,62 @@ class ZeusInstallerDialog(QDialog):
         self.games_dir = None
         self.before_subdirs = set()
 
-        self.setWindowTitle("Sandbox Installer (Zeus Engine)")
+        self.setWindowTitle(_("zeus_title"))
         self.resize(580, 480)
         self.layout = QFormLayout(self)
         self.layout.setSpacing(12)
 
         # Setup.exe selector
         setup_lay = QHBoxLayout()
-        self.lbl_setup = QLabel(prefilled_setup if prefilled_setup else "Sin seleccionar")
+        self.lbl_setup = QLabel(
+            prefilled_setup if prefilled_setup else _("zeus_no_selection")
+        )
         self.lbl_setup.setStyleSheet("font-family: monospace; font-size: 11px; color: #a0a0a0;")
-        btn_browse = QPushButton("Examinar")
+        btn_browse = QPushButton(_("zeus_btn_browse"))
         btn_browse.setObjectName("BlueBtn")
         btn_browse.clicked.connect(self._browse_setup)
         setup_lay.addWidget(self.lbl_setup, stretch=3)
         setup_lay.addWidget(btn_browse, stretch=1)
-        self.layout.addRow("Instalador (setup.exe):", setup_lay)
+        self.layout.addRow(_("zeus_lbl_setup"), setup_lay)
 
         # Environment Mode Selector (Radio buttons)
         self.prefix_mode_group = QButtonGroup(self)
-        self.radio_new_env = QRadioButton("Crear nuevo prefijo aislado desde receta")
+        self.radio_new_env = QRadioButton(_("zeus_radio_new_env"))
         self.radio_new_env.setChecked(True)
-        self.radio_existing_env = QRadioButton("Instalar en un prefijo compartido existente")
+        self.radio_existing_env = QRadioButton(_("zeus_radio_existing_env"))
         self.prefix_mode_group.addButton(self.radio_new_env)
         self.prefix_mode_group.addButton(self.radio_existing_env)
 
         mode_lay = QVBoxLayout()
         mode_lay.addWidget(self.radio_new_env)
         mode_lay.addWidget(self.radio_existing_env)
-        self.layout.addRow("Destino de Instalación:", mode_lay)
+        self.layout.addRow(_("zeus_lbl_destination"), mode_lay)
 
         # Existing Prefix dropdown
         self.existing_prefix_combo = QComboBox()
         self.existing_prefix_combo.addItems(self.db.list_existing_prefixes())
         self.existing_prefix_combo.setEnabled(False)
-        self.layout.addRow("Prefijo Compartido:", self.existing_prefix_combo)
+        self.layout.addRow(_("zeus_lbl_shared_prefix"), self.existing_prefix_combo)
 
         # Target Recipe selection
         self.recipe_combo = QComboBox()
         for rid, rdata in self.recipes.items():
             self.recipe_combo.addItem(rdata.get("display_name", rid), rid)
-        self.layout.addRow("Receta de juego:", self.recipe_combo)
+        self.layout.addRow(_("zeus_lbl_recipe"), self.recipe_combo)
 
         # Target Final Folder Name
         self.folder_input = QLineEdit()
-        self.layout.addRow("Nombre del juego (Biblioteca):", self.folder_input)
+        self.layout.addRow(_("zeus_lbl_game_name"), self.folder_input)
 
         # Toggle widgets based on selection
         self.radio_new_env.toggled.connect(self._on_mode_changed)
         self.radio_existing_env.toggled.connect(self._on_mode_changed)
 
         # InnoSetup Optimization Checkbox
-        self.opt_repack = QCheckBox(
-            "Optimizar descompresión y direccionamiento (InnoSetup/Repacks)"
-        )
+        self.opt_repack = QCheckBox(_("zeus_opt_repack"))
         self.opt_repack.setChecked(False)  # Unchecked by default!
         self.opt_repack.setStyleSheet("color: #00e5ff; font-weight: bold;")
-        self.layout.addRow("Parches del sistema:", self.opt_repack)
+        self.layout.addRow(_("zeus_lbl_patches"), self.opt_repack)
 
         # Log Console
         self.console = QTextEdit()
@@ -119,15 +120,17 @@ class ZeusInstallerDialog(QDialog):
         self.layout.addWidget(self.console)
 
         # Submit Button
-        self.btn_launch = QPushButton("Iniciar Instalador Zeus")
+        self.btn_launch = QPushButton(_("zeus_btn_launch"))
         self.btn_launch.setObjectName("OrangeBtn")
         self.btn_launch.clicked.connect(self._run_zeus_engine)
         self.layout.addRow(self.btn_launch)
 
     @Slot()
     def _browse_setup(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Buscar setup.exe", "", "Instaladores (*setup*.exe *setup*.bin *.exe)"
+        path, _filter = QFileDialog.getOpenFileName(
+            self, _("zeus_file_dialog_title"),
+            "",
+            _("zeus_file_dialog_filter"),
         )
         if path:
             self.lbl_setup.setText(path)
@@ -142,11 +145,11 @@ class ZeusInstallerDialog(QDialog):
         setup_path = self.lbl_setup.text()
         self.target_folder_name = self.folder_input.text().strip()
 
-        if setup_path == "Sin seleccionar" or not self.target_folder_name:
+        if setup_path == _("zeus_no_selection") or not self.target_folder_name:
             QMessageBox.warning(
                 self,
-                "Falta Información",
-                "Por favor selecciona el instalador y el nombre de la carpeta destino.",
+                _("zeus_missing_title"),
+                _("zeus_missing_msg"),
             )
             return
 
@@ -377,8 +380,12 @@ class ZeusInstallerDialog(QDialog):
                     if required_verbs:
                         res = QMessageBox.question(
                             self,
-                            "Dependencias de Receta",
-                            f"El juego se ha instalado con éxito.\nLa receta '{recipe.get('display_name', self.recipe_id)}' requiere inyectar: {', '.join(required_verbs)}.\n\n¿Deseas instalar estas dependencias automáticamente ahora?",
+                            _("zeus_deps_title"),
+                            _(
+                                "zeus_deps_msg_isolated",
+                                recipe_name=recipe.get("display_name", self.recipe_id),
+                                verbs=", ".join(required_verbs),
+                            ),
                             QMessageBox.Yes | QMessageBox.No,
                         )
                         if res == QMessageBox.Yes:
@@ -395,8 +402,8 @@ class ZeusInstallerDialog(QDialog):
                     else:
                         QMessageBox.information(
                             self,
-                            "Éxito",
-                            f"¡Juego '{self.target_folder_name}' instalado y registrado con éxito!",
+                            _("zeus_success_title"),
+                            _("zeus_success_msg_isolated", name=self.target_folder_name),
                         )
                         self.installation_succeeded.emit(
                             self.target_folder_name,
@@ -408,15 +415,19 @@ class ZeusInstallerDialog(QDialog):
                     self.accept()
                 except Exception as e:
                     self.console.append(f"❌ [ZEUS-ENGINE] Error durante migración: {e}")
-                    QMessageBox.critical(self, "Error", f"Fallo al migrar archivos: {e}")
+                    QMessageBox.critical(
+                        self,
+                        _("zeus_error_title"),
+                        _("zeus_error_migrate_msg", error=e),
+                    )
             else:
                 self.console.append(
                     "❌ [ZEUS-ENGINE] AVISO: No se detectó carpeta instalada. ¿Se canceló la instalación?"
                 )
                 QMessageBox.warning(
                     self,
-                    "Cancelado",
-                    "Instalación no completada. Prefijo temporal preservado para inspección.",
+                    _("zeus_cancelled_title"),
+                    _("zeus_cancelled_msg"),
                 )
         else:
             # Existing Shared Prefix flow
@@ -479,8 +490,11 @@ class ZeusInstallerDialog(QDialog):
                 if missing:
                     res = QMessageBox.question(
                         self,
-                        "Dependencias de Receta",
-                        f"El juego se ha instalado en el prefijo compartido.\nFaltan por instalar las siguientes dependencias de la receta: {', '.join(missing)}.\n\n¿Deseas instalarlas automáticamente ahora?",
+                        _("zeus_deps_title"),
+                        _(
+                            "zeus_deps_msg_shared",
+                            verbs=", ".join(missing),
+                        ),
                         QMessageBox.Yes | QMessageBox.No,
                     )
                     if res == QMessageBox.Yes:
@@ -497,8 +511,8 @@ class ZeusInstallerDialog(QDialog):
                 else:
                     QMessageBox.information(
                         self,
-                        "Éxito",
-                        f"¡Juego '{self.target_folder_name}' registrado con éxito en prefijo compartido!",
+                        _("zeus_success_title"),
+                        _("zeus_success_msg_shared", name=self.target_folder_name),
                     )
                     self.installation_succeeded.emit(
                         self.target_folder_name,
@@ -514,8 +528,8 @@ class ZeusInstallerDialog(QDialog):
                 )
                 QMessageBox.warning(
                     self,
-                    "Aviso",
-                    "No se detectó una carpeta nueva en C:\\Games. Si la instalación tuvo éxito en otra ruta, añade el juego manualmente usando 'Reclutar Juego'.",
+                    _("zeus_warning_title"),
+                    _("zeus_warning_msg"),
                 )
                 self.accept()
 

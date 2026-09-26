@@ -17,6 +17,7 @@ from views import InstallChestSelectorDialog, CreateChestWizard
 from core.wine import get_wine_env, get_wine_cmd, get_pe_arch
 from core.registry import get_wine_installed_programs, detect_game_exe
 from core.launchers import extract_exe_icon, generate_launcher
+from i18n import _
 
 
 def handle_cli_args(parent_launcher) -> None:
@@ -109,7 +110,7 @@ def run_native_innoextract(parent_launcher, prefix_name: str, installer_path: st
     target_app_dir.mkdir(parents=True, exist_ok=True)
 
     parent_launcher.toast.show_message(
-        f"⚡ Extracción nativa con innoextract iniciada para '{game_folder_name}'..."
+        _("installer_toast_innoextract_started", game_name=game_folder_name)
     )
 
     try:
@@ -124,9 +125,7 @@ def run_native_innoextract(parent_launcher, prefix_name: str, installer_path: st
                 f"[innoextract] Extraction failed (code {res.returncode}): "
                 f"{(res.stderr or '').strip()[:500]}"
             )
-            parent_launcher.toast.show_message(
-                "⚠ innoextract falló; intentando instalación con Wine..."
-            )
+            parent_launcher.toast.show_message(_("installer_toast_innoextract_failed"))
             return False
 
         app_subfolder = target_app_dir / "app"
@@ -147,7 +146,7 @@ def run_native_innoextract(parent_launcher, prefix_name: str, installer_path: st
             except Exception:
                 pass
 
-        parent_launcher.toast.show_message("¡Extracción nativa completada con éxito!")
+        parent_launcher.toast.show_message(_("installer_toast_innoextract_done"))
         show_post_installer_dialog(parent_launcher, prefix_name)
         return True
     except Exception as e:
@@ -268,7 +267,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
     system_reg = prefix_path / "system.reg"
     if not system_reg.exists():
         try:
-            parent_launcher.toast.show_message("Inicializando nuevo prefijo Wine...")
+            parent_launcher.toast.show_message(_("installer_toast_prefix_init"))
         except Exception:
             pass
         wineboot_bin = (
@@ -411,7 +410,7 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
             for p in get_wine_installed_programs(parent_launcher.db.get_prefixes_dir(), prefix_name)
         }
 
-        parent_launcher.toast.show_message("Instalador iniciado en segundo plano...")
+        parent_launcher.toast.show_message(_("installer_toast_started"))
 
         parent_launcher.installer_process = QProcess()
         parent_launcher.installer_process.setWorkingDirectory(str(setup_dir))
@@ -491,7 +490,9 @@ def run_chest_installer(parent_launcher, prefix_name: str, installer_path: str) 
         )
     except Exception as e:
         parent_widget = parent_launcher if isinstance(parent_launcher, QWidget) else None
-        QMessageBox.critical(parent_widget, "Error", f"Fallo al iniciar el instalador: {e}")
+        QMessageBox.critical(
+            parent_widget, _("installer_error_title"), _("installer_error_start_msg", error=e)
+        )
 
 
 def apply_repack_install_env(env: dict[str, str]) -> dict[str, str]:
@@ -615,7 +616,7 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
     drive_c = parent_launcher.db.get_prefixes_dir() / prefix_name / "drive_c"
 
     dialog = QDialog(parent_launcher)
-    dialog.setWindowTitle("Vincular juego instalado")
+    dialog.setWindowTitle(_("installer_link_dialog_title"))
     dialog.setMinimumWidth(460)
     layout = QVBoxLayout(dialog)
     layout.setContentsMargins(24, 24, 24, 20)
@@ -626,14 +627,12 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
     lbl_icon.setStyleSheet("font-size: 36px; margin-bottom: 4px;")
     layout.addWidget(lbl_icon)
 
-    lbl_title = QLabel("Instalador en ejecución")
+    lbl_title = QLabel(_("installer_lbl_running"))
     lbl_title.setAlignment(Qt.AlignCenter)
     lbl_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;")
     layout.addWidget(lbl_title)
 
-    lbl_msg = QLabel(
-        "El instalador está corriendo en segundo plano.<br>Calculando datos extraídos..."
-    )
+    lbl_msg = QLabel(_("installer_lbl_running_msg"))
     lbl_msg.setTextFormat(Qt.RichText)
     lbl_msg.setWordWrap(True)
     lbl_msg.setAlignment(Qt.AlignCenter)
@@ -690,11 +689,9 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
 
         total_mb = total_bytes / (1024 * 1024)
         if is_running:
-            lbl_title.setText("⏳ Instalación en progreso...")
+            lbl_title.setText(_("installer_status_progress"))
             lbl_msg.setText(
-                f"El juego se está descomprimiendo en <b>drive_c/Games</b>.<br>"
-                f"📊 <b>Datos extraídos: {total_mb:.1f} MB</b><br>"
-                f"<span style='color: #71717a;'>Por favor espera a que finalice la descompresión.</span>"
+                _("installer_status_extracting_msg", total_mb=f"{total_mb:.1f}")
             )
         else:
             timer.stop()
@@ -713,17 +710,14 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
                 }
             """)
             lbl_icon.setText("🎉")
-            lbl_title.setText("✅ ¡Instalación Completada!")
-            lbl_msg.setText(
-                f"<b>{total_mb:.1f} MB</b> extraídos con éxito.<br>"
-                f"Haz clic abajo en <b>Vincular Ejecutable</b> para registrar el juego en tu biblioteca."
-            )
+            lbl_title.setText(_("installer_status_done_title"))
+            lbl_msg.setText(_("installer_status_done_msg", total_mb=f"{total_mb:.1f}"))
 
     timer.timeout.connect(update_status)
     timer.start()
     update_status()
 
-    btn_link = QPushButton("🔗  Vincular Ejecutable del Juego")
+    btn_link = QPushButton(_("installer_btn_link"))
     btn_link.setObjectName("BlueBtn")
     btn_link.setCursor(Qt.PointingHandCursor)
     btn_link.setMinimumHeight(40)
@@ -745,11 +739,12 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
             if detected_exe:
                 confirm = QMessageBox.question(
                     parent_launcher,
-                    "Vincular Juego Detectado",
-                    f"Hemos detectado un nuevo juego instalado:\n\n"
-                    f"Nombre: {reg['name']}\n"
-                    f"Ejecutable: {detected_exe.name}\n\n"
-                    f"¿Deseas vincularlo automáticamente y crear accesos directos?",
+                    _("installer_detected_title"),
+                    _(
+                        "installer_detected_msg",
+                        name=reg["name"],
+                        exe=detected_exe.name,
+                    ),
                     QMessageBox.Yes | QMessageBox.No,
                 )
                 if confirm == QMessageBox.Yes:
@@ -774,15 +769,13 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
 
         if linked_any:
             parent_launcher.refresh_data()
-            parent_launcher.toast.show_message(
-                "¡Juego detectado vinculado y lanzador creado con éxito!"
-            )
+            parent_launcher.toast.show_message(_("installer_toast_auto_linked"))
             return
 
         start_dir = str(drive_c) if drive_c.exists() else ""
-        path, _ = QFileDialog.getOpenFileName(
+        path, _filter = QFileDialog.getOpenFileName(
             parent_launcher,
-            "Seleccionar ejecutable del juego instalado",
+            _("installer_select_exe_title"),
             start_dir,
             "Executables (*.exe)",
         )
@@ -792,7 +785,7 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
     btn_link.clicked.connect(do_link)
     layout.addWidget(btn_link)
 
-    btn_later = QPushButton("Cerrar — vincularé después")
+    btn_later = QPushButton(_("installer_btn_later"))
     btn_later.setStyleSheet(
         "background: transparent; color: #71717a; border: none; font-size: 12px;"
     )
