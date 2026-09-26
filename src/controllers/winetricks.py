@@ -136,9 +136,7 @@ class WinetricksController(QObject):
         self.winetricks_queue.extend(verbs)
         self.winetricks_queue_prefix = prefix_name
 
-        if not (
-            self.launcher.process and self.launcher.process.state() == QProcess.Running
-        ):
+        if not (self.launcher.process and self.launcher.process.state() == QProcess.Running):
             self._process_next_winetricks_queue()
 
     def _process_next_winetricks_queue(self) -> None:
@@ -215,7 +213,9 @@ class WinetricksController(QObject):
     def _on_winetricks_stdout(self) -> None:
         if self.launcher.process and self.launcher.console_dialog:
             data = (
-                self.launcher.process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
+                self.launcher.process.readAllStandardOutput()
+                .data()
+                .decode("utf-8", errors="ignore")
             )
             self.launcher.console_dialog.console.append(data)
 

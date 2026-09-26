@@ -486,9 +486,7 @@ class WineRunnersView(QWidget):
 
         self.down_status_frame.show()
         self.progress_bar.setValue(0)
-        self.lbl_download_status.setText(
-            _("runners_status_initializing", name=runner_data["name"])
-        )
+        self.lbl_download_status.setText(_("runners_status_initializing", name=runner_data["name"]))
 
         # Cache active folder to preserve during disk sweep cleanup
         self.active_download_folder = runner_data["folder"]

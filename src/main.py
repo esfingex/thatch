@@ -138,7 +138,9 @@ class ThatchLauncher(QMainWindow):
         self.chest_details_view.terminal_requested.connect(self.chests_ctrl._on_chest_terminal)
         self.chest_details_view.rename_requested.connect(self.chests_ctrl._on_chest_rename)
         self.chest_details_view.delete_requested.connect(self.chests_ctrl._on_chest_delete)
-        self.chest_details_view.add_program_requested.connect(self.chests_ctrl._on_chest_add_program)
+        self.chest_details_view.add_program_requested.connect(
+            self.chests_ctrl._on_chest_add_program
+        )
         self.chest_details_view.run_program_requested.connect(
             self.chests_ctrl._on_chest_run_program
         )
@@ -351,7 +353,6 @@ class ThatchLauncher(QMainWindow):
                 catalog=self.load_winetricks_catalog(),
             )
 
-
     # ─── SIDEBAR EVENT HANDLERS ────────────────────────────────────────────────
 
     @Slot(str)
@@ -390,7 +391,6 @@ class ThatchLauncher(QMainWindow):
         if hasattr(self.sidebar, "btn_chest_details"):
             self.sidebar.btn_chest_details.setText(f"📦  {prefix_name.replace('_', ' ').title()}")
         self._on_sidebar_view_changed("chest_details")
-
 
     # ─── CARGO VIEW (MAPAS) SLOTS ─────────────────────────────────────────────
 

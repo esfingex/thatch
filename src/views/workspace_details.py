@@ -217,9 +217,7 @@ class WorkspaceDetails(QWidget):
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #ffb300; padding: 4px 0px;"
             )
-            self.btn_auto_inject.setText(
-                _("workspace_btn_complete_env", count=len(missing_verbs))
-            )
+            self.btn_auto_inject.setText(_("workspace_btn_complete_env", count=len(missing_verbs)))
             self.btn_auto_inject.show()
         else:
             self.lbl_env_status.setText(_("workspace_container_ready"))

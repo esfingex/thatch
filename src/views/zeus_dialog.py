@@ -62,9 +62,7 @@ class ZeusInstallerDialog(QDialog):
 
         # Setup.exe selector
         setup_lay = QHBoxLayout()
-        self.lbl_setup = QLabel(
-            prefilled_setup if prefilled_setup else _("zeus_no_selection")
-        )
+        self.lbl_setup = QLabel(prefilled_setup if prefilled_setup else _("zeus_no_selection"))
         self.lbl_setup.setStyleSheet("font-family: monospace; font-size: 11px; color: #a0a0a0;")
         btn_browse = QPushButton(_("zeus_btn_browse"))
         btn_browse.setObjectName("BlueBtn")
@@ -128,7 +126,8 @@ class ZeusInstallerDialog(QDialog):
     @Slot()
     def _browse_setup(self) -> None:
         path, _filter = QFileDialog.getOpenFileName(
-            self, _("zeus_file_dialog_title"),
+            self,
+            _("zeus_file_dialog_title"),
             "",
             _("zeus_file_dialog_filter"),
         )

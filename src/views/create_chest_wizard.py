@@ -237,9 +237,7 @@ class CreateChestWizard(QDialog):
 
         # Name of manual recipe
         self.txt_manual_display_name = QLineEdit()
-        self.txt_manual_display_name.setPlaceholderText(
-            _("wizard_manual_name_placeholder")
-        )
+        self.txt_manual_display_name.setPlaceholderText(_("wizard_manual_name_placeholder"))
         man_layout.addWidget(self.txt_manual_display_name)
 
         # Performance variables checkboxes
@@ -410,16 +408,13 @@ class CreateChestWizard(QDialog):
             if self.current_step == 3:
                 name = self.txt_chest_name.text().strip()
                 is_preset = self.radio_preset.isChecked()
-                mode_str = (
-                    _("wizard_mode_preset") if is_preset else _("wizard_mode_manual")
-                )
+                mode_str = _("wizard_mode_preset") if is_preset else _("wizard_mode_manual")
 
                 if is_preset:
                     env = self.combo_env.currentText()
                 else:
-                    manual_display = (
-                        self.txt_manual_display_name.text().strip()
-                        or _("wizard_manual_fallback", name=name)
+                    manual_display = self.txt_manual_display_name.text().strip() or _(
+                        "wizard_manual_fallback", name=name
                     )
                     env = manual_display
 
@@ -427,9 +422,7 @@ class CreateChestWizard(QDialog):
                 self.lbl_review_name.setText(_("wizard_review_name_value", name=name))
                 self.lbl_review_mode.setText(_("wizard_review_mode_value", mode=mode_str))
                 self.lbl_review_env.setText(_("wizard_review_env_value", env=env))
-                self.lbl_review_runner.setText(
-                    _("wizard_review_runner_value", runner=runner)
-                )
+                self.lbl_review_runner.setText(_("wizard_review_runner_value", runner=runner))
 
             self._update_stepper()
         else:

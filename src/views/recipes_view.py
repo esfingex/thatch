@@ -196,9 +196,7 @@ class RecipesView(QWidget):
     def _on_save_recipe(self) -> None:
         recipe_id = self.txt_id.text().strip()
         if not recipe_id:
-            QMessageBox.warning(
-                self, _("recipes_error_title"), _("recipes_err_no_id")
-            )
+            QMessageBox.warning(self, _("recipes_error_title"), _("recipes_err_no_id"))
             return
 
         verbs_raw = self.txt_verbs.text().split(",")
@@ -261,9 +259,7 @@ class RecipesView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(
-                    self, _("recipes_deleted_title"), _("recipes_deleted_msg")
-                )
+                QMessageBox.information(self, _("recipes_deleted_title"), _("recipes_deleted_msg"))
                 self.list_recipes.clearSelection()
                 self._on_new_recipe()
                 self._load_recipes()

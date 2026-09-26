@@ -34,9 +34,7 @@ class TestAppSmoke(unittest.TestCase):
 
             _app = QApplication.instance() or QApplication([])
             gui = app_main.ThatchLauncher()
-            self.assertGreater(
-                gui.view_stack.count(), 0, "view stack must contain views"
-            )
+            self.assertGreater(gui.view_stack.count(), 0, "view stack must contain views")
             self.assertIsNotNone(gui.db)
             self.assertIsNotNone(gui.recipes)
             gui.close()

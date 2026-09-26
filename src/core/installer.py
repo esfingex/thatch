@@ -690,9 +690,7 @@ def show_post_installer_dialog(parent_launcher, prefix_name: str) -> None:
         total_mb = total_bytes / (1024 * 1024)
         if is_running:
             lbl_title.setText(_("installer_status_progress"))
-            lbl_msg.setText(
-                _("installer_status_extracting_msg", total_mb=f"{total_mb:.1f}")
-            )
+            lbl_msg.setText(_("installer_status_extracting_msg", total_mb=f"{total_mb:.1f}"))
         else:
             timer.stop()
             progress_bar.setRange(0, 100)

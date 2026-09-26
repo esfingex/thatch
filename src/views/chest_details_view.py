@@ -370,9 +370,7 @@ class ChestDetailsView(QWidget):
 
         # ── Search box ─────────────────────────────────────────────────────────
         self.dep_search = QLineEdit()
-        self.dep_search.setPlaceholderText(
-            _("cdetails_deps_search_placeholder")
-        )
+        self.dep_search.setPlaceholderText(_("cdetails_deps_search_placeholder"))
         self.dep_search.setStyleSheet(
             "QLineEdit { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; "
             "color: #ffffff; padding: 8px 14px; font-size: 13px; } "
@@ -806,9 +804,7 @@ class ChestDetailsView(QWidget):
         # Empty state
         if self.list_programs.count() == 0:
             item = QListWidgetItem(self.list_programs)
-            lbl_empty = QLabel(
-                _("cdetails_programs_empty")
-            )
+            lbl_empty = QLabel(_("cdetails_programs_empty"))
             lbl_empty.setStyleSheet(
                 "color: #52525b; font-size: 12px; font-style: italic; padding: 24px;"
             )
@@ -961,9 +957,7 @@ class ChestDetailsView(QWidget):
                 msg = _("cdetails_deps_no_winetricks")
                 color = "#f87171"
             else:
-                msg = _(
-                    "cdetails_deps_empty_category", category=self.active_dep_category
-                )
+                msg = _("cdetails_deps_empty_category", category=self.active_dep_category)
                 color = "#71717a"
 
             lbl_empty = QLabel(msg)
@@ -1214,9 +1208,7 @@ class ChestDetailsView(QWidget):
             )
             return
 
-        target_dir = QFileDialog.getExistingDirectory(
-            self, _("cdetails_select_mount_folder")
-        )
+        target_dir = QFileDialog.getExistingDirectory(self, _("cdetails_select_mount_folder"))
         if not target_dir:
             return
 

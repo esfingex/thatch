@@ -14,9 +14,7 @@ class TestLocales(unittest.TestCase):
     def test_en_es_key_parity(self):
         en = json.loads((LOCALES_DIR / "en.json").read_text(encoding="utf-8"))
         es = json.loads((LOCALES_DIR / "es.json").read_text(encoding="utf-8"))
-        self.assertEqual(
-            set(en), set(es), "en/es locale files must contain identical keys"
-        )
+        self.assertEqual(set(en), set(es), "en/es locale files must contain identical keys")
 
     def test_no_empty_values(self):
         for lang in ("en", "es"):

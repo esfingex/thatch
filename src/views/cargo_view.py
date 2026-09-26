@@ -58,9 +58,7 @@ class MapCard(QFrame):
         # Display required verbs
         verbs = recipe_data.get("required_verbs", [])
         verbs_text = (
-            _("cargo_card_injects", verbs=", ".join(verbs))
-            if verbs
-            else _("cargo_card_no_verbs")
+            _("cargo_card_injects", verbs=", ".join(verbs)) if verbs else _("cargo_card_no_verbs")
         )
         lbl_verbs = QLabel(verbs_text)
         lbl_verbs.setStyleSheet("color: #8e8e93; font-size: 11px; font-style: italic;")
@@ -264,9 +262,7 @@ class MapasView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(
-                    self, _("cargo_deleted_title"), _("cargo_deleted_msg")
-                )
+                QMessageBox.information(self, _("cargo_deleted_title"), _("cargo_deleted_msg"))
                 self.map_deleted.emit()
             except Exception as e:
                 QMessageBox.critical(

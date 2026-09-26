@@ -34,7 +34,9 @@ class ChestsController(QObject):
 
     @Slot()
     def _on_create_chest_requested(self) -> None:
-        wizard = CreateChestWizard(self.launcher.recipes, self.launcher._get_runners_list(), self.launcher)
+        wizard = CreateChestWizard(
+            self.launcher.recipes, self.launcher._get_runners_list(), self.launcher
+        )
         wizard.created.connect(self._on_chest_wizard_finish)
         wizard.exec()
 
@@ -121,9 +123,7 @@ class ChestsController(QObject):
     def _on_chest_init_error(self, error: QProcess.ProcessError, name: str) -> None:
         print(f"[ChestInit Error] QProcess failed for '{name}': {error}")
         if self.launcher.console_dialog:
-            self.launcher.console_dialog.console.append(
-                _("main_init_error_console", error=error)
-            )
+            self.launcher.console_dialog.console.append(_("main_init_error_console", error=error))
             self.launcher.console_dialog.btn_close.setEnabled(True)
 
     def _on_chest_init_finished(self, exit_code: int, name: str) -> None:
@@ -306,9 +306,7 @@ class ChestsController(QObject):
                     prefix=prefix_name,
                     recipe_id=recipe_id,
                 )
-                icon_path = self.launcher._extract_exe_icon(
-                    prefix_name, exe_file, clean_game_name
-                )
+                icon_path = self.launcher._extract_exe_icon(prefix_name, exe_file, clean_game_name)
                 self.launcher.generate_launcher(prefix_name, clean_game_name, icon_path)
                 self.launcher.refresh_data()
                 self.launcher.toast.show_message(_("main_toast_recruited", name=clean_game_name))
@@ -371,9 +369,7 @@ class ChestsController(QObject):
             self.launcher.remove_launcher(prefix_name, game_name)
             self.launcher.db.remove_game(game_name)
             self.launcher.refresh_data()
-            self.launcher.toast.show_message(
-                _("main_toast_uninstalled", game_name=game_name)
-            )
+            self.launcher.toast.show_message(_("main_toast_uninstalled", game_name=game_name))
 
     @Slot()
     def _on_manual_cleanup_orphans(self) -> None:
