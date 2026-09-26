@@ -62,9 +62,7 @@ class SettingsDialog(QDialog):
 
         # 4. Launch Mode
         self.combo_mode = QComboBox()
-        self.combo_mode.addItem(
-            "Cerrar Thatch al lanzar juego (Máximo Rendimiento)", "extreme"
-        )
+        self.combo_mode.addItem("Cerrar Thatch al lanzar juego (Máximo Rendimiento)", "extreme")
         self.combo_mode.addItem("Minimizar a la bandeja (Tray Icon)", "stealth")
         self.combo_mode.addItem("Mantener Thatch abierto en primer plano", "keep")
         layout.addRow("Comportamiento al Lanzar:", self.combo_mode)

@@ -212,9 +212,7 @@ class RecipesView(QWidget):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            QMessageBox.information(
-                self, "Guardado", f"Mapa '{recipe_id}' guardado exitosamente."
-            )
+            QMessageBox.information(self, "Guardado", f"Mapa '{recipe_id}' guardado exitosamente.")
             self._load_recipes()
 
             # Re-select the saved item
@@ -223,9 +221,7 @@ class RecipesView(QWidget):
                 self.list_recipes.setCurrentItem(items[0])
 
         except Exception as e:
-            QMessageBox.critical(
-                self, "Error al guardar", f"No se pudo guardar el mapa:\n{e}"
-            )
+            QMessageBox.critical(self, "Error al guardar", f"No se pudo guardar el mapa:\n{e}")
 
     def _on_delete_recipe(self) -> None:
         recipe_id = self.txt_id.text().strip()
@@ -243,13 +239,9 @@ class RecipesView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(
-                    self, "Eliminado", "Mapa eliminado correctamente."
-                )
+                QMessageBox.information(self, "Eliminado", "Mapa eliminado correctamente.")
                 self.list_recipes.clearSelection()
                 self._on_new_recipe()
                 self._load_recipes()
             except Exception as e:
-                QMessageBox.critical(
-                    self, "Error", f"No se pudo eliminar el mapa:\n{e}"
-                )
+                QMessageBox.critical(self, "Error", f"No se pudo eliminar el mapa:\n{e}")

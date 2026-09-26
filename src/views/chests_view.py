@@ -19,9 +19,7 @@ class ChestCard(QFrame):
 
     clicked = Signal(str)  # Emits the prefix folder name
 
-    def __init__(
-        self, prefix_name: str, info: dict, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, prefix_name: str, info: dict, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.prefix_name = prefix_name
         self.setObjectName("ChestCard")

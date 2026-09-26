@@ -50,9 +50,7 @@ def detect_gpu() -> str:
     return "unknown"
 
 
-def compile_performance_env(
-    gpu_type: str, recipe_env: dict[str, str]
-) -> dict[str, str]:
+def compile_performance_env(gpu_type: str, recipe_env: dict[str, str]) -> dict[str, str]:
     """
     Compiles the final, optimal environment variables dictionary for launching the game.
     Tailors graphics overrides based on the detected GPU and merges them with recipe overrides.

@@ -44,7 +44,11 @@ prefixes/
 runners/*
 !runners/LICENSE
 thatch_db.sqlite
+*.sqlite-wal
+*.sqlite-shm
+thatch_db.json*
 *.log
 
 # Agents
 .agents/
+.codewhale/

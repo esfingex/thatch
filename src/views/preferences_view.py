@@ -30,9 +30,7 @@ class PreferencesView(QWidget):
     cleanup_orphans_requested = Signal()
     register_context_menu_requested = Signal()
 
-    def __init__(
-        self, db: ThatchDB, runners: list[str], parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, db: ThatchDB, runners: list[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.db = db
         self.runners = runners
@@ -50,9 +48,7 @@ class PreferencesView(QWidget):
         # 2. Scroll Area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background-color: transparent;")
@@ -81,9 +77,7 @@ class PreferencesView(QWidget):
         self._populate_runners_combo()
         self.combo_runner.currentTextChanged.connect(self._save_default_runner)
         grid.addWidget(self.lbl_runner, 0, 0)
-        grid.addWidget(
-            self.combo_runner, 0, 1, 1, 2
-        )  # Span columns to match browse buttons
+        grid.addWidget(self.combo_runner, 0, 1, 1, 2)  # Span columns to match browse buttons
 
         # Row 1: Launch Action
         self.lbl_launch = QLabel(_("lbl_launch_action"))
@@ -162,9 +156,7 @@ class PreferencesView(QWidget):
         cache_layout.setContentsMargins(12, 8, 12, 8)
 
         self.lbl_cache_title = QLabel(_("lbl_winetricks_cache_size"))
-        self.lbl_cache_title.setStyleSheet(
-            "color: #ffffff; font-size: 12px; font-weight: bold;"
-        )
+        self.lbl_cache_title.setStyleSheet("color: #ffffff; font-size: 12px; font-weight: bold;")
         self.lbl_cache_size = QLabel(_("lbl_scan_size"))
         self.lbl_cache_size.setStyleSheet("color: #8e8e93; font-size: 12px;")
 
@@ -180,9 +172,7 @@ class PreferencesView(QWidget):
         self.btn_register_context_menu.setStyleSheet(
             "padding: 4px 10px; font-size: 11px; color: #10b981; background-color: #064e3b; border: 1px solid #059669; border-radius: 4px; margin-right: 8px;"
         )
-        self.btn_register_context_menu.clicked.connect(
-            self.register_context_menu_requested.emit
-        )
+        self.btn_register_context_menu.clicked.connect(self.register_context_menu_requested.emit)
 
         self.btn_clean_orphans = QPushButton("🧹 Limpiar Links del Panel")
         self.btn_clean_orphans.setCursor(Qt.PointingHandCursor)
@@ -214,9 +204,7 @@ class PreferencesView(QWidget):
         prefs_layout.addWidget(self.lbl_specs_title)
 
         self.lbl_specs = QLabel(_("win_specs"))
-        self.lbl_specs.setStyleSheet(
-            "color: #71717a; font-size: 12px; line-height: 18px;"
-        )
+        self.lbl_specs.setStyleSheet("color: #71717a; font-size: 12px; line-height: 18px;")
         prefs_layout.addWidget(self.lbl_specs)
 
         scroll_layout.addWidget(card_prefs)
@@ -357,9 +345,7 @@ class PreferencesView(QWidget):
 
     @Slot()
     def _save_default_terminal(self) -> None:
-        self.db.data["global_config"]["default_terminal"] = (
-            self.combo_term.currentText()
-        )
+        self.db.data["global_config"]["default_terminal"] = self.combo_term.currentText()
         self.db.save()
 
     def update_runners_list(self, runners: list[str]) -> None:
@@ -376,9 +362,7 @@ class PreferencesView(QWidget):
             return
 
         try:
-            total_bytes = sum(
-                f.stat().st_size for f in cache_path.glob("**/*") if f.is_file()
-            )
+            total_bytes = sum(f.stat().st_size for f in cache_path.glob("**/*") if f.is_file())
             if total_bytes == 0:
                 self.lbl_cache_size.setText("0 B")
             else:
@@ -404,11 +388,7 @@ class PreferencesView(QWidget):
             QMessageBox.information(self, title, msg)
             return
 
-        title = (
-            "Clear Winetricks Cache"
-            if ACTIVE_LANG == "en"
-            else "Limpiar Caché de Winetricks"
-        )
+        title = "Clear Winetricks Cache" if ACTIVE_LANG == "en" else "Limpiar Caché de Winetricks"
         msg = (
             f"Are you sure you want to delete all cached files in {cache_path}?\nThis will remove installers that need to be re-downloaded next time you inject dependencies."
             if ACTIVE_LANG == "en"
@@ -433,9 +413,7 @@ class PreferencesView(QWidget):
 
     @Slot()
     def _save_default_runner(self) -> None:
-        self.db.data["global_config"]["default_runner"] = (
-            self.combo_runner.currentText()
-        )
+        self.db.data["global_config"]["default_runner"] = self.combo_runner.currentText()
         self.db.save()
 
     @Slot()

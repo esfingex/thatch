@@ -25,9 +25,7 @@ class ToastNotification(QFrame):
 
         # Message label
         self.lbl_message = QLabel("")
-        self.lbl_message.setStyleSheet(
-            "color: #e4e4e7; font-size: 13px; font-weight: bold;"
-        )
+        self.lbl_message.setStyleSheet("color: #e4e4e7; font-size: 13px; font-weight: bold;")
         layout.addWidget(self.lbl_message, stretch=1)
 
         # Dismiss button

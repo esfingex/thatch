@@ -84,9 +84,7 @@ class ProgramRowWidget(QWidget):
             self.btn_unlink.setStyleSheet(
                 "min-height: 22px; max-height: 22px; padding: 0px 10px; font-size: 11px; font-weight: bold; background-color: #202024; color: #f87171; border: 1px solid #3f3f46;"
             )
-            self.btn_unlink.clicked.connect(
-                lambda: self.unlink_clicked.emit(display_name)
-            )
+            self.btn_unlink.clicked.connect(lambda: self.unlink_clicked.emit(display_name))
             layout.addWidget(self.btn_unlink)
 
             # Desinstalar
@@ -96,9 +94,7 @@ class ProgramRowWidget(QWidget):
             self.btn_delete.setStyleSheet(
                 "min-height: 22px; max-height: 22px; padding: 0px 10px; font-size: 11px; font-weight: bold; background-color: transparent;"
             )
-            self.btn_delete.clicked.connect(
-                lambda: self.delete_clicked.emit(display_name)
-            )
+            self.btn_delete.clicked.connect(lambda: self.delete_clicked.emit(display_name))
             layout.addWidget(self.btn_delete)
         else:
             # Badge: detected
@@ -115,9 +111,7 @@ class ProgramRowWidget(QWidget):
             self.btn_link.setStyleSheet(
                 "min-height: 22px; max-height: 22px; padding: 0px 12px; font-size: 11px; font-weight: bold;"
             )
-            self.btn_link.clicked.connect(
-                lambda: self.link_clicked.emit(reg_id, install_location)
-            )
+            self.btn_link.clicked.connect(lambda: self.link_clicked.emit(reg_id, install_location))
             layout.addWidget(self.btn_link)
 
 
@@ -141,15 +135,11 @@ class ChestDetailsView(QWidget):
     install_dependency_requested = Signal(str, str)  # prefix_name, verb
     remove_dependency_requested = Signal(str, str)  # prefix_name, verb
     runner_changed = Signal(str, str)  # prefix_name, runner_name
-    perf_settings_changed = Signal(
-        str, bool, bool, bool
-    )  # prefix_name, esync, fsync, sandbox
+    perf_settings_changed = Signal(str, bool, bool, bool)  # prefix_name, esync, fsync, sandbox
     virtual_desktop_changed = Signal(str, bool, str)  # prefix_name, enabled, resolution
     dpi_scale_changed = Signal(str, int)  # prefix_name, dpi_value (96/120/144/192)
     monitor_changed = Signal(str, str)  # prefix_name, monitor_name
-    link_registry_program_requested = Signal(
-        str, str, str
-    )  # prefix_name, reg_id, install_location
+    link_registry_program_requested = Signal(str, str, str)  # prefix_name, reg_id, install_location
 
     def __init__(self, active_gpu: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -200,31 +190,23 @@ class ChestDetailsView(QWidget):
 
         self.btn_browse = QPushButton("📁 Browse")
         self.btn_browse.setCursor(Qt.PointingHandCursor)
-        self.btn_browse.clicked.connect(
-            lambda: self.browse_requested.emit(self.prefix_name)
-        )
+        self.btn_browse.clicked.connect(lambda: self.browse_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_browse)
 
         self.btn_terminal = QPushButton("💻 Terminal")
         self.btn_terminal.setCursor(Qt.PointingHandCursor)
-        self.btn_terminal.clicked.connect(
-            lambda: self.terminal_requested.emit(self.prefix_name)
-        )
+        self.btn_terminal.clicked.connect(lambda: self.terminal_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_terminal)
 
         self.btn_rename = QPushButton("✏️  Renombrar")
         self.btn_rename.setCursor(Qt.PointingHandCursor)
-        self.btn_rename.clicked.connect(
-            lambda: self.rename_requested.emit(self.prefix_name)
-        )
+        self.btn_rename.clicked.connect(lambda: self.rename_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_rename)
 
         self.btn_delete = QPushButton("🗑")
         self.btn_delete.setObjectName("RedBtnText")
         self.btn_delete.setCursor(Qt.PointingHandCursor)
-        self.btn_delete.clicked.connect(
-            lambda: self.delete_requested.emit(self.prefix_name)
-        )
+        self.btn_delete.clicked.connect(lambda: self.delete_requested.emit(self.prefix_name))
         header_layout.addWidget(self.btn_delete)
 
         layout.addLayout(header_layout)
@@ -380,17 +362,13 @@ class ChestDetailsView(QWidget):
         header.addWidget(title)
         layout.addLayout(header)
 
-        subtitle = QLabel(
-            "Windows components instalados en este WINEPREFIX via Winetricks"
-        )
+        subtitle = QLabel("Windows components instalados en este WINEPREFIX via Winetricks")
         subtitle.setStyleSheet("color: #71717a; font-size: 13px; margin-bottom: 4px;")
         layout.addWidget(subtitle)
 
         # ── Search box ─────────────────────────────────────────────────────────
         self.dep_search = QLineEdit()
-        self.dep_search.setPlaceholderText(
-            "🔍  Buscar componente... (e.g. dxvk, vcrun, dotnet)"
-        )
+        self.dep_search.setPlaceholderText("🔍  Buscar componente... (e.g. dxvk, vcrun, dotnet)")
         self.dep_search.setStyleSheet(
             "QLineEdit { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; "
             "color: #ffffff; padding: 8px 14px; font-size: 13px; } "
@@ -412,9 +390,7 @@ class ChestDetailsView(QWidget):
             btn.setCheckable(True)
             btn.setChecked(cat == "All")
             btn.setCursor(Qt.PointingHandCursor)
-            btn.clicked.connect(
-                lambda checked=False, c=cat: self._on_dep_filter_changed(c)
-            )
+            btn.clicked.connect(lambda checked=False, c=cat: self._on_dep_filter_changed(c))
             filter_layout.addWidget(btn)
             self.dep_filter_group.append(btn)
 
@@ -424,9 +400,7 @@ class ChestDetailsView(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         self.dep_list_widget = QWidget()
         self.dep_list_widget.setStyleSheet("background-color: transparent;")
@@ -505,9 +479,7 @@ class ChestDetailsView(QWidget):
         self.lbl_sandbox_desc = QLabel(
             "Locks down WINEPREFIX folders, unlinks /home directory access, and disables root disk mapping for secure installations."
         )
-        self.lbl_sandbox_desc.setStyleSheet(
-            "color: #71717a; font-size: 11px; margin-left: 20px;"
-        )
+        self.lbl_sandbox_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-left: 20px;")
         self.lbl_sandbox_desc.setWordWrap(True)
 
         perf_layout.addWidget(self.chk_esync)
@@ -594,17 +566,13 @@ class ChestDetailsView(QWidget):
 
         res_row = QHBoxLayout()
         self.lbl_vd_res = QLabel("Resolución:")
-        self.lbl_vd_res.setStyleSheet(
-            "color: #a1a1aa; font-size: 12px; margin-left: 20px;"
-        )
+        self.lbl_vd_res.setStyleSheet("color: #a1a1aa; font-size: 12px; margin-left: 20px;")
         self.combo_vd_resolution = QComboBox()
         self.combo_vd_resolution.addItems(
             ["1920x1080", "2560x1440", "3840x2160", "1280x720", "1600x900"]
         )
         self.combo_vd_resolution.setCurrentText("1920x1080")
-        self.combo_vd_resolution.currentTextChanged.connect(
-            self._on_virtual_desktop_toggled
-        )
+        self.combo_vd_resolution.currentTextChanged.connect(self._on_virtual_desktop_toggled)
         self.combo_vd_resolution.setEnabled(False)
         self.lbl_vd_res.setEnabled(False)
 
@@ -631,9 +599,7 @@ class ChestDetailsView(QWidget):
             "Selecciona en qué monitor/pantalla debe abrirse el juego. "
             "Forzará temporalmente el monitor principal al iniciar el juego."
         )
-        lbl_monitor_desc.setStyleSheet(
-            "color: #71717a; font-size: 11px; margin-top: 2px;"
-        )
+        lbl_monitor_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-top: 2px;")
         lbl_monitor_desc.setWordWrap(True)
         monitor_right.addWidget(lbl_monitor_desc)
         disp_grid.addLayout(monitor_right, 2, 1)
@@ -663,9 +629,7 @@ class ChestDetailsView(QWidget):
             "Asigna letras de unidad adicionales (como D:, E:, Y:) que apunten a carpetas específicas de tu sistema. "
             "Wine podrá ver e interactuar SOLAMENTE con esas carpetas, manteniendo a salvo todo lo demás en modo sandbox."
         )
-        self.lbl_drives_desc.setStyleSheet(
-            "color: #71717a; font-size: 11px; margin-bottom: 8px;"
-        )
+        self.lbl_drives_desc.setStyleSheet("color: #71717a; font-size: 11px; margin-bottom: 8px;")
         self.lbl_drives_desc.setWordWrap(True)
         layout.addWidget(self.lbl_drives_desc)
 
@@ -707,9 +671,7 @@ class ChestDetailsView(QWidget):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
         scroll.setWidget(widget)
         return scroll
 
@@ -882,9 +844,7 @@ class ChestDetailsView(QWidget):
         if idx != -1:
             self.combo_runner_override.setCurrentIndex(idx)
         else:
-            self.combo_runner_override.setCurrentIndex(
-                self.combo_runner_override.count() - 1
-            )
+            self.combo_runner_override.setCurrentIndex(self.combo_runner_override.count() - 1)
         self.combo_runner_override.blockSignals(False)
 
         # Load Esync/Fsync status from recipe
@@ -892,9 +852,7 @@ class ChestDetailsView(QWidget):
         perf_env = recipe.get("performance_env", {})
         esync_val = perf_env.get("WINEESYNC", "0") == "1"
         fsync_val = perf_env.get("WINEMFSYNC", "0") == "1"
-        sandbox_val = (
-            bool(associated_game.get("sandbox", False)) if associated_game else False
-        )
+        sandbox_val = bool(associated_game.get("sandbox", False)) if associated_game else False
 
         self.chk_esync.blockSignals(True)
         self.chk_fsync.blockSignals(True)
@@ -941,9 +899,7 @@ class ChestDetailsView(QWidget):
 
         connected_monitors = []
         try:
-            res = subprocess.run(
-                ["xrandr", "--query"], capture_output=True, text=True, timeout=2
-            )
+            res = subprocess.run(["xrandr", "--query"], capture_output=True, text=True, timeout=2)
             for line in res.stdout.splitlines():
                 if " connected" in line:
                     parts = line.split()
@@ -957,9 +913,7 @@ class ChestDetailsView(QWidget):
 
         # Select current monitor
         cur_monitor = (
-            associated_game.get("target_monitor", "default")
-            if associated_game
-            else "default"
+            associated_game.get("target_monitor", "default") if associated_game else "default"
         )
         found_idx = 0
         for i in range(self.combo_monitor.count()):
@@ -995,19 +949,12 @@ class ChestDetailsView(QWidget):
         deps_source = self._deps_catalog if self._deps_catalog else []
 
         # Apply category + search filters
-        search_query = (
-            self.dep_search.text().strip().lower()
-            if hasattr(self, "dep_search")
-            else ""
-        )
+        search_query = self.dep_search.text().strip().lower() if hasattr(self, "dep_search") else ""
 
         filtered = [
             dep
             for dep in deps_source
-            if (
-                self.active_dep_category == "All"
-                or dep["type"] == self.active_dep_category
-            )
+            if (self.active_dep_category == "All" or dep["type"] == self.active_dep_category)
             and (
                 not search_query
                 or search_query in dep["verb"].lower()
@@ -1049,9 +996,7 @@ class ChestDetailsView(QWidget):
                 left_layout.setSpacing(8)
 
                 lbl_name = QLabel(dep["name"])
-                lbl_name.setStyleSheet(
-                    "color: #ffffff; font-weight: bold; font-size: 13px;"
-                )
+                lbl_name.setStyleSheet("color: #ffffff; font-weight: bold; font-size: 13px;")
                 lbl_name.setWordWrap(True)
                 left_layout.addWidget(lbl_name)
 
@@ -1077,8 +1022,8 @@ class ChestDetailsView(QWidget):
                         "min-height: 22px; max-height: 22px; padding: 0px 12px; font-size: 11px; font-weight: bold; background-color: transparent;"
                     )
                     btn_action.clicked.connect(
-                        lambda checked=False, v=verb: (
-                            self.remove_dependency_requested.emit(self.prefix_name, v)
+                        lambda checked=False, v=verb: self.remove_dependency_requested.emit(
+                            self.prefix_name, v
                         )
                     )
                     top_layout.addWidget(btn_action)
@@ -1090,8 +1035,8 @@ class ChestDetailsView(QWidget):
                         "min-height: 22px; max-height: 22px; padding: 0px 12px; font-size: 11px; font-weight: bold;"
                     )
                     btn_action.clicked.connect(
-                        lambda checked=False, v=verb: (
-                            self.install_dependency_requested.emit(self.prefix_name, v)
+                        lambda checked=False, v=verb: self.install_dependency_requested.emit(
+                            self.prefix_name, v
                         )
                     )
                     top_layout.addWidget(btn_action)
@@ -1170,12 +1115,8 @@ class ChestDetailsView(QWidget):
         dosdevices_path = prefix_path / "dosdevices"
 
         if not dosdevices_path.exists():
-            lbl_no_devices = QLabel(
-                "No se detectó el directorio de dispositivos de Wine."
-            )
-            lbl_no_devices.setStyleSheet(
-                "color: #71717a; font-style: italic; font-size: 12px;"
-            )
+            lbl_no_devices = QLabel("No se detectó el directorio de dispositivos de Wine.")
+            lbl_no_devices.setStyleSheet("color: #71717a; font-style: italic; font-size: 12px;")
             self.drives_layout.addWidget(lbl_no_devices)
             return
 
@@ -1305,9 +1246,7 @@ class ChestDetailsView(QWidget):
                 f"¡Unidad {letter.upper()}: enlazada con éxito a {target_dir}!",
             )
         except Exception as e:
-            QMessageBox.critical(
-                self, "Error", f"No se pudo crear la unidad virtual: {e}"
-            )
+            QMessageBox.critical(self, "Error", f"No se pudo crear la unidad virtual: {e}")
 
     def _on_delete_drive_clicked(self, letter: str) -> None:
         """Removes a virtual drive mapping symlink."""

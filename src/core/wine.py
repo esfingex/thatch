@@ -55,9 +55,7 @@ def get_pe_arch(exe_path: str | Path) -> str:
     return "x86"
 
 
-def get_wine_cmd(
-    db: ThatchDB, runner_path: Path | None, exe_path: str | Path | None = None
-) -> str:
+def get_wine_cmd(db: ThatchDB, runner_path: Path | None, exe_path: str | Path | None = None) -> str:
     """
     Returns the correct wine or wine64 binary for the runner.
     Auto-detects PE32+ (x64) executables and upgrades to wine64 automatically.
@@ -117,8 +115,7 @@ def get_wine_env(
         runner_override
         if runner_override
         else (
-            db.data["global_config"].get("default_runner", "")
-            or "Wine del Sistema (/usr/bin/wine)"
+            db.data["global_config"].get("default_runner", "") or "Wine del Sistema (/usr/bin/wine)"
         )
     )
     runners_dir = db.get_runners_dir()
@@ -142,9 +139,7 @@ def get_wine_env(
         )
 
         env["PATH"] = f"{bin_dir}:{env.get('PATH', '')}"
-        env["LD_LIBRARY_PATH"] = (
-            f"{lib_dir}:{lib64_dir}:{env.get('LD_LIBRARY_PATH', '')}"
-        )
+        env["LD_LIBRARY_PATH"] = f"{lib_dir}:{lib64_dir}:{env.get('LD_LIBRARY_PATH', '')}"
 
         dllpaths = []
         for path in [

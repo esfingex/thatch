@@ -28,9 +28,7 @@ class CreateChestWizard(QDialog):
 
     created = Signal(str, str, str, bool)  # name, recipe_id, runner, sandbox
 
-    def __init__(
-        self, recipes: dict, runners: list[str], parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, recipes: dict, runners: list[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.recipes = recipes
         self.runners = runners
@@ -41,9 +39,7 @@ class CreateChestWizard(QDialog):
 
         # Resolve dynamic recipes path
         # Thatch launcher base dir is src/.., config/recipes is at base_dir/config/recipes
-        self.recipes_dir = (
-            Path(__file__).parent.parent.parent.resolve() / "config" / "recipes"
-        )
+        self.recipes_dir = Path(__file__).parent.parent.parent.resolve() / "config" / "recipes"
 
         # Main layout
         main_layout = QVBoxLayout(self)
@@ -61,9 +57,7 @@ class CreateChestWizard(QDialog):
 
         header_title_layout = QVBoxLayout()
         self.lbl_wizard_title = QLabel("⚓ Create New Treasure Chest")
-        self.lbl_wizard_title.setStyleSheet(
-            "color: #ffffff; font-size: 18px; font-weight: bold;"
-        )
+        self.lbl_wizard_title.setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold;")
         self.lbl_wizard_subtitle = QLabel("Set up a new Windows environment")
         self.lbl_wizard_subtitle.setStyleSheet("color: #71717a; font-size: 12px;")
         header_title_layout.addWidget(self.lbl_wizard_title)
@@ -217,13 +211,9 @@ class CreateChestWizard(QDialog):
             self.combo_env.addItem(rdata.get("display_name", rid), rid)
 
         # Sandbox for Presets pathway too
-        self.chk_sandbox_preset = QCheckBox(
-            "Activar Aislamiento de Seguridad (Sandbox)"
-        )
+        self.chk_sandbox_preset = QCheckBox("Activar Aislamiento de Seguridad (Sandbox)")
         self.chk_sandbox_preset.setChecked(False)
-        self.chk_sandbox_preset.setStyleSheet(
-            "color: #60a5fa; font-weight: bold; margin-top: 8px;"
-        )
+        self.chk_sandbox_preset.setStyleSheet("color: #60a5fa; font-weight: bold; margin-top: 8px;")
         self.chk_sandbox_preset.setToolTip(
             "Elimina accesos a carpetas reales como /home e independiza el prefijo para máxima seguridad."
         )
@@ -318,9 +308,7 @@ class CreateChestWizard(QDialog):
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
 
-        subtitle = QLabel(
-            "Choose the Wine runtime compiler/wrapper for this environment"
-        )
+        subtitle = QLabel("Choose the Wine runtime compiler/wrapper for this environment")
         subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
 
         self.combo_runner = QComboBox()
@@ -350,9 +338,7 @@ class CreateChestWizard(QDialog):
         title.setObjectName("CardTitle")
         title.setStyleSheet("font-size: 18px;")
 
-        subtitle = QLabel(
-            "Confirm your configuration details below before setup starts"
-        )
+        subtitle = QLabel("Confirm your configuration details below before setup starts")
         subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
 
         grid_frame = QFrame()
@@ -363,9 +349,7 @@ class CreateChestWizard(QDialog):
         grid_layout.setSpacing(10)
 
         self.lbl_review_name = QLabel("Name: -")
-        self.lbl_review_name.setStyleSheet(
-            "color: #ffffff; font-size: 14px; font-weight: bold;"
-        )
+        self.lbl_review_name.setStyleSheet("color: #ffffff; font-size: 14px; font-weight: bold;")
         self.lbl_review_mode = QLabel("Mode: -")
         self.lbl_review_mode.setStyleSheet("color: #e4e4e7; font-size: 13px;")
         self.lbl_review_env = QLabel("Environment: -")
@@ -434,16 +418,13 @@ class CreateChestWizard(QDialog):
             if self.current_step == 3:
                 name = self.txt_chest_name.text().strip()
                 is_preset = self.radio_preset.isChecked()
-                mode_str = (
-                    "Preset Recipe" if is_preset else "Manual Custom Configuration"
-                )
+                mode_str = "Preset Recipe" if is_preset else "Manual Custom Configuration"
 
                 if is_preset:
                     env = self.combo_env.currentText()
                 else:
                     manual_display = (
-                        self.txt_manual_display_name.text().strip()
-                        or f"Manual Custom ({name})"
+                        self.txt_manual_display_name.text().strip() or f"Manual Custom ({name})"
                     )
                     env = manual_display
 
@@ -457,9 +438,7 @@ class CreateChestWizard(QDialog):
         else:
             # Emit create and close
             name = self.txt_chest_name.text().strip().replace(" ", "_").lower()
-            runner = (
-                self.combo_runner.currentData() or "Wine del Sistema (/usr/bin/wine)"
-            )
+            runner = self.combo_runner.currentData() or "Wine del Sistema (/usr/bin/wine)"
             if runner == "system_wine":
                 runner = "Wine del Sistema (/usr/bin/wine)"
 
@@ -491,9 +470,7 @@ class CreateChestWizard(QDialog):
                 verbs_raw = self.txt_manual_verbs.text().strip()
                 required_verbs = []
                 if verbs_raw:
-                    required_verbs = [
-                        v.strip() for v in verbs_raw.split(",") if v.strip()
-                    ]
+                    required_verbs = [v.strip() for v in verbs_raw.split(",") if v.strip()]
 
                 # Assembly recipe dict
                 new_recipe = {

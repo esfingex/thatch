@@ -53,9 +53,7 @@ def get_wine_installed_programs(prefixes_dir: Path, prefix_name: str) -> list[di
                             app_id = current_app["id"]
                             if app_id not in seen_ids:
                                 display_name = current_app["name"]
-                                if not any(
-                                    p in display_name.lower() for p in skip_patterns
-                                ):
+                                if not any(p in display_name.lower() for p in skip_patterns):
                                     seen_ids.add(app_id)
                                     results.append(current_app)
 
@@ -69,11 +67,7 @@ def get_wine_installed_programs(prefixes_dir: Path, prefix_name: str) -> list[di
                         if uninstall_prefix in header:
                             orig_header = line_stripped[1:-1]
                             idx = orig_header.lower().find(uninstall_prefix)
-                            app_id = (
-                                orig_header[idx + len(uninstall_prefix) :]
-                                .strip()
-                                .strip("\"'")
-                            )
+                            app_id = orig_header[idx + len(uninstall_prefix) :].strip().strip("\"'")
                             if app_id:
                                 in_uninstall = True
                                 current_app = {

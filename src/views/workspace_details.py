@@ -165,9 +165,7 @@ class WorkspaceDetails(QWidget):
             self.combo_runners.setCurrentIndex(0)
 
         if missing_verbs:
-            self.lbl_env_status.setText(
-                f"⚠️ Entorno incompleto (Falta: {', '.join(missing_verbs)})"
-            )
+            self.lbl_env_status.setText(f"⚠️ Entorno incompleto (Falta: {', '.join(missing_verbs)})")
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #ffb300; padding: 2px 0px;"
             )
@@ -191,9 +189,7 @@ class WorkspaceDetails(QWidget):
         self.current_prefix = env_name
 
         self.lbl_game_title.setText(f"Contenedor: {env_name}")
-        self.lbl_recipe_badge.setText(
-            f"Receta Vinculada: {recipe.get('display_name', 'Ninguna')}"
-        )
+        self.lbl_recipe_badge.setText(f"Receta Vinculada: {recipe.get('display_name', 'Ninguna')}")
 
         prefix_full = prefixes_dir / env_name
         self.lbl_prefix_path.setText(str(prefix_full))
@@ -210,9 +206,7 @@ class WorkspaceDetails(QWidget):
             self.lbl_env_status.setStyleSheet(
                 "font-size: 11px; font-weight: bold; color: #ffb300; padding: 4px 0px;"
             )
-            self.btn_auto_inject.setText(
-                f"⚡ Completar Entorno ({len(missing_verbs)} faltantes)"
-            )
+            self.btn_auto_inject.setText(f"⚡ Completar Entorno ({len(missing_verbs)} faltantes)")
             self.btn_auto_inject.show()
         else:
             self.lbl_env_status.setText("✅ Contenedor optimizado y listo")

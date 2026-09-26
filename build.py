@@ -79,9 +79,7 @@ class ThatchCompiler:
             if spec_file.exists():
                 spec_file.unlink()
 
-            print(
-                "[+] ¡Listo! El binario nativo 'thatch' está operativo y el entorno limpio."
-            )
+            print("[+] ¡Listo! El binario nativo 'thatch' está operativo y el entorno limpio.")
         else:
             print("[-] Error: No se encontró el binario generado en la carpeta 'dist'.")
 

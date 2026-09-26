@@ -30,9 +30,7 @@ class IndexLoaderWorker(QThread):
             url = "https://raw.githubusercontent.com/bottlesdevs/components/main/index.yml"
             req = urllib.request.Request(
                 url,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
-                },
+                headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"},
             )
             with urllib.request.urlopen(req, timeout=10) as response:
                 content = response.read().decode("utf-8")
@@ -64,11 +62,7 @@ class IndexLoaderWorker(QThread):
                 name_lower = name.lower()
 
                 # Filter out ARM/aarch64 builds on x86_64 systems
-                if (
-                    "aarch64" in name_lower
-                    or "arm64" in name_lower
-                    or arch in ["aarch64", "arm64"]
-                ):
+                if "aarch64" in name_lower or "arm64" in name_lower or arch in ["aarch64", "arm64"]:
                     continue
 
                 if category == "runners" and sub_category == "wine":
@@ -115,10 +109,10 @@ class IndexLoaderWorker(QThread):
 
             # Fetch latest custom GE-Proton release dynamically from Github releases!
             try:
-                ge_api = "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
-                ge_req = urllib.request.Request(
-                    ge_api, headers={"User-Agent": "Mozilla/5.0"}
+                ge_api = (
+                    "https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"
                 )
+                ge_req = urllib.request.Request(ge_api, headers={"User-Agent": "Mozilla/5.0"})
                 import json
 
                 with urllib.request.urlopen(ge_req, timeout=5) as ge_res:
@@ -168,9 +162,7 @@ class RunnerDownloadWorker(QThread):
     finished = Signal(str)
     error = Signal(str)
 
-    def __init__(
-        self, runner_id: str, dest_dir: Path, custom_url: str | None = None
-    ) -> None:
+    def __init__(self, runner_id: str, dest_dir: Path, custom_url: str | None = None) -> None:
         super().__init__()
         self.runner_id = runner_id
         self.dest_dir = dest_dir
@@ -183,17 +175,13 @@ class RunnerDownloadWorker(QThread):
                 download_url = self.custom_url
                 self.status.emit("Preparando descarga de GE-Proton...")
             else:
-                self.status.emit(
-                    f"Consultando manifiesto del runner {self.runner_id}..."
-                )
+                self.status.emit(f"Consultando manifiesto del runner {self.runner_id}...")
 
                 # Fetch the manifest YAML
                 manifest_url = f"https://raw.githubusercontent.com/bottlesdevs/components/main/runners/wine/{self.runner_id}.yml"
                 req = urllib.request.Request(
                     manifest_url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
-                    },
+                    headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"},
                 )
                 with urllib.request.urlopen(req, timeout=10) as response:
                     manifest_content = response.read().decode("utf-8")
@@ -212,24 +200,18 @@ class RunnerDownloadWorker(QThread):
 
                 # Fallbacks in case manifest parsing is blocked
                 if not download_url:
-                    if (
-                        "soda" in self.runner_id.lower()
-                        or "caffe" in self.runner_id.lower()
-                    ):
+                    if "soda" in self.runner_id.lower() or "caffe" in self.runner_id.lower():
                         download_url = f"https://github.com/bottlesdevs/wine/releases/download/{self.runner_id}/{self.runner_id}-x86_64.tar.xz"
                     elif (
-                        "wine-ge" in self.runner_id.lower()
-                        or "ge-proton" in self.runner_id.lower()
+                        "wine-ge" in self.runner_id.lower() or "ge-proton" in self.runner_id.lower()
                     ):
-                        tag_name = self.runner_id.replace(
-                            "wine-ge-proton", "GE-Proton"
-                        ).replace("wine-ge-", "GE-Proton")
+                        tag_name = self.runner_id.replace("wine-ge-proton", "GE-Proton").replace(
+                            "wine-ge-", "GE-Proton"
+                        )
                         download_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/{tag_name}/{tag_name}.tar.gz"
 
             if not download_url:
-                raise ValueError(
-                    "No se pudo resolver la URL de descarga para este runner."
-                )
+                raise ValueError("No se pudo resolver la URL de descarga para este runner.")
 
             self.status.emit(f"Conectando para descargar {self.runner_id}...")
             self.dest_dir.mkdir(parents=True, exist_ok=True)
@@ -241,9 +223,7 @@ class RunnerDownloadWorker(QThread):
 
             req = urllib.request.Request(
                 download_url,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
-                },
+                headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"},
             )
 
             with urllib.request.urlopen(req) as response:
@@ -292,9 +272,7 @@ class WineRunnersView(QWidget):
     runner_downloaded = Signal(str)
     toast_requested = Signal(str)
 
-    def __init__(
-        self, db: ThatchDB, runners: list[str], parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, db: ThatchDB, runners: list[str], parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.db = db
         self.runners = runners
@@ -315,9 +293,7 @@ class WineRunnersView(QWidget):
         # 2. Scroll Area
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background-color: transparent;")
@@ -458,9 +434,7 @@ class WineRunnersView(QWidget):
 
             top_layout = QHBoxLayout()
             lbl_name = QLabel(runner_data["name"])
-            lbl_name.setStyleSheet(
-                "color: #ffffff; font-weight: bold; font-size: 13px;"
-            )
+            lbl_name.setStyleSheet("color: #ffffff; font-weight: bold; font-size: 13px;")
 
             top_layout.addWidget(lbl_name)
             top_layout.addStretch(1)
@@ -477,9 +451,7 @@ class WineRunnersView(QWidget):
             btn_down.setObjectName("BlueBtn")
             btn_down.setCursor(Qt.PointingHandCursor)
             btn_down.setToolTip("Descargar / Actualizar Runner")
-            btn_down.setStyleSheet(
-                "padding: 4px 8px; font-size: 13px; font-weight: bold;"
-            )
+            btn_down.setStyleSheet("padding: 4px 8px; font-size: 13px; font-weight: bold;")
             btn_down.clicked.connect(
                 lambda checked=False, r=runner_data: self._start_runner_download(r)
             )
@@ -505,9 +477,7 @@ class WineRunnersView(QWidget):
 
         self.down_status_frame.show()
         self.progress_bar.setValue(0)
-        self.lbl_download_status.setText(
-            f"Initializing download: {runner_data['name']}"
-        )
+        self.lbl_download_status.setText(f"Initializing download: {runner_data['name']}")
 
         # Cache active folder to preserve during disk sweep cleanup
         self.active_download_folder = runner_data["folder"]

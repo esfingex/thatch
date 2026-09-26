@@ -24,9 +24,7 @@ class MapCard(QFrame):
     install_clicked = Signal(str, str)  # Emits: display_name, recipe_id
     delete_clicked = Signal(str, str)  # Emits: display_name, recipe_id
 
-    def __init__(
-        self, recipe_id: str, recipe_data: dict, parent: QWidget | None = None
-    ) -> None:
+    def __init__(self, recipe_id: str, recipe_data: dict, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.recipe_id = recipe_id
         self.recipe_data = recipe_data
@@ -39,9 +37,7 @@ class MapCard(QFrame):
 
         # Header Row: Title & Badge
         header = QHBoxLayout()
-        display_name = recipe_data.get(
-            "display_name", recipe_id.replace("_", " ").title()
-        )
+        display_name = recipe_data.get("display_name", recipe_id.replace("_", " ").title())
         lbl_title = QLabel(display_name)
         lbl_title.setObjectName("CardTitle")
         header.addWidget(lbl_title, stretch=1)
@@ -61,11 +57,7 @@ class MapCard(QFrame):
 
         # Display required verbs
         verbs = recipe_data.get("required_verbs", [])
-        verbs_text = (
-            f"Inyecta: {', '.join(verbs)}"
-            if verbs
-            else "Sin dependencias de winetricks"
-        )
+        verbs_text = f"Inyecta: {', '.join(verbs)}" if verbs else "Sin dependencias de winetricks"
         lbl_verbs = QLabel(verbs_text)
         lbl_verbs.setStyleSheet("color: #8e8e93; font-size: 11px; font-style: italic;")
         lbl_verbs.setWordWrap(True)
@@ -121,9 +113,7 @@ class MapasView(QWidget):
         header.setSpacing(4)
         lbl_title = QLabel("Mapas del Tesoro")
         lbl_title.setObjectName("ViewTitle")
-        lbl_subtitle = QLabel(
-            "Configuraciones y recetas JSON compartibles en config/recipes/"
-        )
+        lbl_subtitle = QLabel("Configuraciones y recetas JSON compartibles en config/recipes/")
         lbl_subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
         header.addWidget(lbl_title)
         header.addWidget(lbl_subtitle)
@@ -140,9 +130,7 @@ class MapasView(QWidget):
         # 3. Cards Scroll Area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll_area.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         self.scroll_content = QWidget()
         self.scroll_content.setStyleSheet("background-color: transparent;")
@@ -169,9 +157,7 @@ class MapasView(QWidget):
             "las comparará con las ya inyectadas para saltarse las existentes e inyectará de forma secuencial "
             "únicamente las dependencias faltantes, optimizando la instalación y previniendo archivos corruptos o redundantes."
         )
-        lbl_about_desc.setStyleSheet(
-            "color: #71717a; font-size: 12px; line-height: 18px;"
-        )
+        lbl_about_desc.setStyleSheet("color: #71717a; font-size: 12px; line-height: 18px;")
         lbl_about_desc.setWordWrap(True)
         about_layout.addWidget(lbl_about_desc)
 
@@ -268,14 +254,10 @@ class MapasView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(
-                    self, "Eliminado", "Mapa eliminado correctamente."
-                )
+                QMessageBox.information(self, "Eliminado", "Mapa eliminado correctamente.")
                 self.map_deleted.emit()
             except Exception as e:
-                QMessageBox.critical(
-                    self, "Error", f"No se pudo eliminar el mapa:\n{e}"
-                )
+                QMessageBox.critical(self, "Error", f"No se pudo eliminar el mapa:\n{e}")
 
     @Slot()
     def _on_filters_changed(self) -> None:

@@ -127,9 +127,7 @@ class InstallChestSelectorDialog(QDialog):
         file_text_layout.setSpacing(2)
 
         lbl_file_name = QLabel(exe_file.name)
-        lbl_file_name.setStyleSheet(
-            "font-size: 14px; font-weight: bold; color: #60a5fa;"
-        )
+        lbl_file_name.setStyleSheet("font-size: 14px; font-weight: bold; color: #60a5fa;")
         lbl_file_name.setTextInteractionFlags(Qt.TextSelectableByMouse)
         file_text_layout.addWidget(lbl_file_name)
 
@@ -144,9 +142,7 @@ class InstallChestSelectorDialog(QDialog):
         # 3. Chests List (Scroll Area)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background-color: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
 
         scroll_content = QWidget()
         scroll_content.setStyleSheet("background-color: transparent;")
@@ -166,17 +162,13 @@ class InstallChestSelectorDialog(QDialog):
                 c_layout.addWidget(lbl_chest_icon)
 
                 lbl_name = QLabel(chest_name)
-                lbl_name.setStyleSheet(
-                    "font-size: 14px; font-weight: bold; color: #ffffff;"
-                )
+                lbl_name.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
                 c_layout.addWidget(lbl_name, stretch=1)
 
                 btn_install = QPushButton(_("btn_install_here"))
                 btn_install.setObjectName("InstallBtn")
                 btn_install.setCursor(Qt.PointingHandCursor)
-                btn_install.clicked.connect(
-                    lambda _, c=chest_name: self._select_chest(c)
-                )
+                btn_install.clicked.connect(lambda _, c=chest_name: self._select_chest(c))
                 c_layout.addWidget(btn_install)
 
                 scroll_layout.addWidget(card)
