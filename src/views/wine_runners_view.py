@@ -16,6 +16,8 @@ import tarfile
 import shutil
 from database import ThatchDB
 
+from i18n import _
+
 
 class IndexLoaderWorker(QThread):
     """
@@ -89,13 +91,13 @@ class IndexLoaderWorker(QThread):
                 latest_item = items[0]
                 name = latest_item["name"]
 
-                desc = f"Official Bottles {name} engine."
+                desc = _("runners_desc_bottles_engine", name=name)
                 if group_key == "Soda":
-                    desc = f"Official Bottles latest Soda {name} runner with dynamic Fsync/Esync gaming support."
+                    desc = _("runners_desc_soda", name=name)
                 elif group_key == "Caffe":
-                    desc = f"Official Bottles latest Caffe {name} general-purpose compatibility runner."
+                    desc = _("runners_desc_caffe", name=name)
                 elif group_key == "Wine-GE":
-                    desc = f"GloriousEggroll's latest custom {name} runner optimized for high-end gaming."
+                    desc = _("runners_desc_wine_ge", name=name)
 
                 runners_list.append(
                     {
@@ -135,7 +137,7 @@ class IndexLoaderWorker(QThread):
                                 {
                                     "id": f"ge-proton-custom-{ge_tag}",
                                     "name": f"GE-Proton (Latest: {ge_tag})",
-                                    "desc": f"GloriousEggroll's latest custom {ge_tag} Steam Proton engine optimized for maximum compatibility.",
+                                    "desc": _("runners_desc_ge_proton", name=ge_tag),
                                     "date": ge_data.get("published_at", "2026-05-29"),
                                     "category_group": "GE-Proton",
                                     "custom_download_url": ge_url,
@@ -173,9 +175,9 @@ class RunnerDownloadWorker(QThread):
             download_url = ""
             if self.custom_url:
                 download_url = self.custom_url
-                self.status.emit("Preparando descarga de GE-Proton...")
+                self.status.emit(_("runners_status_preparing_ge"))
             else:
-                self.status.emit(f"Consultando manifiesto del runner {self.runner_id}...")
+                self.status.emit(_("runners_status_manifest", name=self.runner_id))
 
                 # Fetch the manifest YAML
                 manifest_url = f"https://raw.githubusercontent.com/bottlesdevs/components/main/runners/wine/{self.runner_id}.yml"
@@ -211,9 +213,9 @@ class RunnerDownloadWorker(QThread):
                         download_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/{tag_name}/{tag_name}.tar.gz"
 
             if not download_url:
-                raise ValueError("No se pudo resolver la URL de descarga para este runner.")
+                raise ValueError(_("runners_err_no_url"))
 
-            self.status.emit(f"Conectando para descargar {self.runner_id}...")
+            self.status.emit(_("runners_status_connecting", name=self.runner_id))
             self.dest_dir.mkdir(parents=True, exist_ok=True)
 
             # Temporary file path
@@ -242,9 +244,11 @@ class RunnerDownloadWorker(QThread):
                         if total_size > 0:
                             pct = int((bytes_downloaded / total_size) * 90)
                             self.progress.emit(pct)
-                            self.status.emit(f"Downloading {self.runner_id}: {pct}%")
+                            self.status.emit(
+                                _("runners_status_downloading", name=self.runner_id, pct=pct)
+                            )
 
-            self.status.emit("Extracting Wine runner...")
+            self.status.emit(_("runners_status_extracting"))
             self.progress.emit(93)
 
             try:
@@ -286,9 +290,9 @@ class WineRunnersView(QWidget):
         layout.setSpacing(20)
 
         # 1. Header Layout
-        lbl_title = QLabel("Wine Runners")
-        lbl_title.setObjectName("ViewTitle")
-        layout.addWidget(lbl_title)
+        self.lbl_title = QLabel(_("runners_title"))
+        self.lbl_title.setObjectName("ViewTitle")
+        layout.addWidget(self.lbl_title)
 
         # 2. Scroll Area
         scroll = QScrollArea()
@@ -307,18 +311,15 @@ class WineRunnersView(QWidget):
         run_layout = QVBoxLayout(card_runners)
         run_layout.setSpacing(12)
 
-        lbl_run_title = QLabel("Wine Runners Downloader")
-        lbl_run_title.setObjectName("CardTitle")
-        run_layout.addWidget(lbl_run_title)
+        self.lbl_run_title = QLabel(_("runners_card_title"))
+        self.lbl_run_title.setObjectName("CardTitle")
+        run_layout.addWidget(self.lbl_run_title)
 
-        lbl_run_desc = QLabel(
-            "Descarga runtimes y runners de compilación personalizados de forma asíncrona.\n"
-            "Nota: Para optimizar espacio, instalar un runner elimina versiones antiguas de ese mismo tipo."
-        )
-        lbl_run_desc.setStyleSheet(
+        self.lbl_run_desc = QLabel(_("runners_card_desc"))
+        self.lbl_run_desc.setStyleSheet(
             "color: #71717a; font-size: 12px; line-height: 18px; margin-bottom: 4px;"
         )
-        run_layout.addWidget(lbl_run_desc)
+        run_layout.addWidget(self.lbl_run_desc)
 
         # Active download display row (hidden initially)
         self.down_status_frame = QFrame()
@@ -328,7 +329,7 @@ class WineRunnersView(QWidget):
         status_box = QVBoxLayout(self.down_status_frame)
         status_box.setSpacing(6)
 
-        self.lbl_download_status = QLabel("Ready")
+        self.lbl_download_status = QLabel(_("runners_status_ready"))
         self.lbl_download_status.setStyleSheet(
             "color: #ffffff; font-size: 11px; font-weight: bold;"
         )
@@ -358,12 +359,20 @@ class WineRunnersView(QWidget):
         self._refresh_runners_list()
 
         # Load index.yml in background
-        self.lbl_download_status.setText("Cargando catálogo oficial de Bottles...")
+        self.lbl_download_status.setText(_("runners_status_loading_catalog"))
         self.down_status_frame.show()
         self.index_loader = IndexLoaderWorker()
         self.index_loader.loaded.connect(self._on_index_loaded)
         self.index_loader.error.connect(self._on_index_error)
         self.index_loader.start()
+
+    def retranslate(self) -> None:
+        """Refreshes static labels and rebuilds runner rows with the active language."""
+        self.lbl_title.setText(_("runners_title"))
+        self.lbl_run_title.setText(_("runners_card_title"))
+        self.lbl_run_desc.setText(_("runners_card_desc"))
+        self.lbl_download_status.setText(_("runners_status_ready"))
+        self._refresh_runners_list()
 
     def update_runners_list(self, runners: list[str]) -> None:
         """Externally updates the list of installed wine runners."""
@@ -382,12 +391,12 @@ class WineRunnersView(QWidget):
             {
                 "id": "soda-9.0-1",
                 "name": "soda-9.0-1",
-                "desc": "Bottles Soda 9.0-1 runner with dynamic Fsync/Esync gaming support (local fallback).",
+                "desc": _("runners_desc_fallback_soda"),
             },
             {
                 "id": "caffe-9.7",
                 "name": "caffe-9.7",
-                "desc": "Bottles Caffe 9.7 general-purpose compatibility runner (local fallback).",
+                "desc": _("runners_desc_fallback_caffe"),
             },
         ]
         self._refresh_runners_list()
@@ -443,14 +452,14 @@ class WineRunnersView(QWidget):
             is_installed = folder_name in installed_folders
 
             if is_installed:
-                lbl_badge = QLabel("✓ Active")
+                lbl_badge = QLabel(_("runners_badge_active"))
                 lbl_badge.setObjectName("BadgeReady")
                 top_layout.addWidget(lbl_badge)
 
             btn_down = QPushButton("🔄")
             btn_down.setObjectName("BlueBtn")
             btn_down.setCursor(Qt.PointingHandCursor)
-            btn_down.setToolTip("Descargar / Actualizar Runner")
+            btn_down.setToolTip(_("runners_btn_download_tooltip"))
             btn_down.setStyleSheet("padding: 4px 8px; font-size: 13px; font-weight: bold;")
             btn_down.clicked.connect(
                 lambda checked=False, r=runner_data: self._start_runner_download(r)
@@ -470,14 +479,16 @@ class WineRunnersView(QWidget):
         if self.download_worker and self.download_worker.isRunning():
             QMessageBox.warning(
                 self,
-                "Download in Progress",
-                "Another runner download is currently in progress. Please wait.",
+                _("runners_err_progress_title"),
+                _("runners_err_progress_msg"),
             )
             return
 
         self.down_status_frame.show()
         self.progress_bar.setValue(0)
-        self.lbl_download_status.setText(f"Initializing download: {runner_data['name']}")
+        self.lbl_download_status.setText(
+            _("runners_status_initializing", name=runner_data["name"])
+        )
 
         # Cache active folder to preserve during disk sweep cleanup
         self.active_download_folder = runner_data["folder"]
@@ -546,10 +557,10 @@ class WineRunnersView(QWidget):
         # Direct user notifications
         if purged_count > 0:
             self.toast_requested.emit(
-                f"¡Runner '{name}' listo! Se purgaron {purged_count} compilaciones antiguas."
+                _("runners_toast_ready_purged", name=name, count=purged_count)
             )
         else:
-            self.toast_requested.emit(f"¡Runner '{name}' listo e instalado!")
+            self.toast_requested.emit(_("runners_toast_ready", name=name))
 
         # Emit signal to notify main stacked windows
         self.runner_downloaded.emit(name)
@@ -561,7 +572,7 @@ class WineRunnersView(QWidget):
         self.runners_list_widget.setEnabled(True)
         QMessageBox.critical(
             self,
-            "Runner Download Error",
-            f"Failed to download or extract Wine runner:\n{err_msg}",
+            _("runners_err_download_title"),
+            _("runners_err_download_msg", error=err_msg),
         )
         self.download_worker = None

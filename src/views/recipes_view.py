@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from i18n import _
+
 
 class RecipesView(QWidget):
     """
@@ -33,14 +35,12 @@ class RecipesView(QWidget):
         # Header
         header = QVBoxLayout()
         header.setSpacing(4)
-        lbl_title = QLabel("Editor de Mapas")
-        lbl_title.setObjectName("ViewTitle")
-        lbl_subtitle = QLabel(
-            "Crea y edita mapas del tesoro (configuraciones JSON) para tus contenedores."
-        )
-        lbl_subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
-        header.addWidget(lbl_title)
-        header.addWidget(lbl_subtitle)
+        self.lbl_title = QLabel(_("recipes_title"))
+        self.lbl_title.setObjectName("ViewTitle")
+        self.lbl_subtitle = QLabel(_("recipes_subtitle"))
+        self.lbl_subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
+        header.addWidget(self.lbl_title)
+        header.addWidget(self.lbl_subtitle)
         main_layout.addLayout(header)
 
         # Content Layout
@@ -59,10 +59,10 @@ class RecipesView(QWidget):
         self.list_recipes.itemSelectionChanged.connect(self._on_recipe_selected)
         left_layout.addWidget(self.list_recipes)
 
-        btn_new = QPushButton("+ Nuevo Mapa")
-        btn_new.setObjectName("BlueBtn")
-        btn_new.clicked.connect(self._on_new_recipe)
-        left_layout.addWidget(btn_new)
+        self.btn_new = QPushButton(_("recipes_btn_new"))
+        self.btn_new.setObjectName("BlueBtn")
+        self.btn_new.clicked.connect(self._on_new_recipe)
+        left_layout.addWidget(self.btn_new)
 
         content_layout.addWidget(left_widget)
 
@@ -72,52 +72,52 @@ class RecipesView(QWidget):
         right_layout = QVBoxLayout(self.right_widget)
         right_layout.setSpacing(12)
 
-        lbl_id = QLabel("ID del Mapa (sin .json):")
+        self.lbl_id = QLabel(_("recipes_lbl_id"))
         self.txt_id = QLineEdit()
-        right_layout.addWidget(lbl_id)
+        right_layout.addWidget(self.lbl_id)
         right_layout.addWidget(self.txt_id)
 
-        lbl_name = QLabel("Nombre a Mostrar:")
+        self.lbl_name = QLabel(_("recipes_lbl_name"))
         self.txt_name = QLineEdit()
-        right_layout.addWidget(lbl_name)
+        right_layout.addWidget(self.lbl_name)
         right_layout.addWidget(self.txt_name)
 
-        lbl_verbs = QLabel("Cargamento / Dependencias (ej: dxvk, vkd3d):")
+        self.lbl_verbs = QLabel(_("recipes_lbl_verbs"))
         self.txt_verbs = QLineEdit()
-        right_layout.addWidget(lbl_verbs)
+        right_layout.addWidget(self.lbl_verbs)
         right_layout.addWidget(self.txt_verbs)
 
-        lbl_runner = QLabel("Motor Wine (ej: wine-cachyos):")
+        self.lbl_runner = QLabel(_("recipes_lbl_runner"))
         self.cmb_runner = QComboBox()
         self.cmb_runner.setEditable(True)
         if parent and hasattr(parent, "_get_runners_list"):
             runners = ["wine-cachyos", "wine"] + parent._get_runners_list()
             self.cmb_runner.addItems(runners)
-        right_layout.addWidget(lbl_runner)
+        right_layout.addWidget(self.lbl_runner)
         right_layout.addWidget(self.cmb_runner)
 
-        lbl_desc = QLabel("Descripción:")
+        self.lbl_desc = QLabel(_("recipes_lbl_desc"))
         self.txt_desc = QTextEdit()
         self.txt_desc.setMaximumHeight(80)
-        right_layout.addWidget(lbl_desc)
+        right_layout.addWidget(self.lbl_desc)
         right_layout.addWidget(self.txt_desc)
 
-        lbl_env = QLabel("Variables de Entorno (Formato JSON):")
+        self.lbl_env = QLabel(_("recipes_lbl_env"))
         self.txt_env = QTextEdit()
         self.txt_env.setObjectName("ConsoleLog")  # Monospace font
-        right_layout.addWidget(lbl_env)
+        right_layout.addWidget(self.lbl_env)
         right_layout.addWidget(self.txt_env)
 
         btn_layout = QHBoxLayout()
-        btn_save = QPushButton("Guardar Mapa")
-        btn_save.setObjectName("OrangeBtn")
-        btn_save.clicked.connect(self._on_save_recipe)
-        btn_layout.addWidget(btn_save)
+        self.btn_save = QPushButton(_("recipes_btn_save"))
+        self.btn_save.setObjectName("OrangeBtn")
+        self.btn_save.clicked.connect(self._on_save_recipe)
+        btn_layout.addWidget(self.btn_save)
 
-        btn_delete = QPushButton("Eliminar Mapa")
-        btn_delete.setObjectName("RedBtn")
-        btn_delete.clicked.connect(self._on_delete_recipe)
-        btn_layout.addWidget(btn_delete)
+        self.btn_delete = QPushButton(_("recipes_btn_delete"))
+        self.btn_delete.setObjectName("RedBtn")
+        self.btn_delete.clicked.connect(self._on_delete_recipe)
+        btn_layout.addWidget(self.btn_delete)
 
         right_layout.addLayout(btn_layout)
 
@@ -125,6 +125,20 @@ class RecipesView(QWidget):
         content_layout.addWidget(self.right_widget, stretch=1)
 
         self._load_recipes()
+
+    def retranslate(self) -> None:
+        """Refreshes static labels and buttons with the active language."""
+        self.lbl_title.setText(_("recipes_title"))
+        self.lbl_subtitle.setText(_("recipes_subtitle"))
+        self.btn_new.setText(_("recipes_btn_new"))
+        self.lbl_id.setText(_("recipes_lbl_id"))
+        self.lbl_name.setText(_("recipes_lbl_name"))
+        self.lbl_verbs.setText(_("recipes_lbl_verbs"))
+        self.lbl_runner.setText(_("recipes_lbl_runner"))
+        self.lbl_desc.setText(_("recipes_lbl_desc"))
+        self.lbl_env.setText(_("recipes_lbl_env"))
+        self.btn_save.setText(_("recipes_btn_save"))
+        self.btn_delete.setText(_("recipes_btn_delete"))
 
     def _load_recipes(self) -> None:
         self.list_recipes.clear()
@@ -182,7 +196,9 @@ class RecipesView(QWidget):
     def _on_save_recipe(self) -> None:
         recipe_id = self.txt_id.text().strip()
         if not recipe_id:
-            QMessageBox.warning(self, "Error", "Debes especificar un ID para el mapa.")
+            QMessageBox.warning(
+                self, _("recipes_error_title"), _("recipes_err_no_id")
+            )
             return
 
         verbs_raw = self.txt_verbs.text().split(",")
@@ -193,8 +209,8 @@ class RecipesView(QWidget):
         except json.JSONDecodeError:
             QMessageBox.critical(
                 self,
-                "Error de Formato",
-                "Las variables de entorno deben estar en formato JSON válido.",
+                _("recipes_err_format_title"),
+                _("recipes_err_format_msg"),
             )
             return
 
@@ -212,7 +228,11 @@ class RecipesView(QWidget):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
-            QMessageBox.information(self, "Guardado", f"Mapa '{recipe_id}' guardado exitosamente.")
+            QMessageBox.information(
+                self,
+                _("recipes_saved_title"),
+                _("recipes_saved_msg", name=recipe_id),
+            )
             self._load_recipes()
 
             # Re-select the saved item
@@ -221,7 +241,9 @@ class RecipesView(QWidget):
                 self.list_recipes.setCurrentItem(items[0])
 
         except Exception as e:
-            QMessageBox.critical(self, "Error al guardar", f"No se pudo guardar el mapa:\n{e}")
+            QMessageBox.critical(
+                self, _("recipes_err_save_title"), _("recipes_save_failed_msg", error=e)
+            )
 
     def _on_delete_recipe(self) -> None:
         recipe_id = self.txt_id.text().strip()
@@ -230,8 +252,8 @@ class RecipesView(QWidget):
 
         reply = QMessageBox.question(
             self,
-            "Confirmar Eliminación",
-            f"¿Estás seguro de que quieres eliminar el mapa '{recipe_id}'?",
+            _("recipes_confirm_delete_title"),
+            _("recipes_confirm_delete_msg", name=recipe_id),
             QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
@@ -239,9 +261,13 @@ class RecipesView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(self, "Eliminado", "Mapa eliminado correctamente.")
+                QMessageBox.information(
+                    self, _("recipes_deleted_title"), _("recipes_deleted_msg")
+                )
                 self.list_recipes.clearSelection()
                 self._on_new_recipe()
                 self._load_recipes()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"No se pudo eliminar el mapa:\n{e}")
+                QMessageBox.critical(
+                    self, _("recipes_error_title"), _("recipes_delete_failed_msg", error=e)
+                )

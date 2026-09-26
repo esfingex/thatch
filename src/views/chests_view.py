@@ -12,6 +12,9 @@ from PySide6.QtCore import Signal, Qt
 from pathlib import Path
 
 
+from i18n import _
+
+
 class ChestCard(QFrame):
     """
     Individual interactive Card widget representing a WINEPREFIX / Chest.
@@ -39,13 +42,12 @@ class ChestCard(QFrame):
         header_layout.addWidget(self.lbl_title, stretch=1)
 
         status = info.get("status", "Ready")
-        self.lbl_status = QLabel("Ready" if status == "Ready" else "Stopped")
+        self._status = status
+        self.lbl_status = QLabel(_("card_ready") if status == "Ready" else _("card_stopped"))
         if status == "Ready":
             self.lbl_status.setObjectName("BadgeReady")
-            self.lbl_status.setText("✓ Ready")
         else:
             self.lbl_status.setObjectName("BadgeStopped")
-            self.lbl_status.setText("● Stopped")
 
         header_layout.addWidget(self.lbl_status)
         layout.addLayout(header_layout)
@@ -56,15 +58,15 @@ class ChestCard(QFrame):
         grid.setContentsMargins(0, 0, 0, 0)
 
         # Row 1: Environment
-        lbl_env_tag = QLabel("Environment:")
+        lbl_env_tag = QLabel(_("card_label_environment"))
         lbl_env_tag.setObjectName("CardLabel")
-        self.lbl_env_val = QLabel(info.get("environment", "Custom"))
+        self.lbl_env_val = QLabel(info.get("environment", _("card_env_custom")))
         self.lbl_env_val.setObjectName("CardValue")
         grid.addWidget(lbl_env_tag, 0, 0)
         grid.addWidget(self.lbl_env_val, 0, 1)
 
         # Row 2: Runner
-        lbl_runner_tag = QLabel("Runner:")
+        lbl_runner_tag = QLabel(_("card_label_runner"))
         lbl_runner_tag.setObjectName("CardLabel")
         self.lbl_runner_val = QLabel(info.get("runner", "Wine"))
         self.lbl_runner_val.setObjectName("CardValue")
@@ -72,7 +74,7 @@ class ChestCard(QFrame):
         grid.addWidget(self.lbl_runner_val, 1, 1)
 
         # Row 3: Architecture
-        lbl_arch_tag = QLabel("Architecture:")
+        lbl_arch_tag = QLabel(_("card_label_architecture"))
         lbl_arch_tag.setObjectName("CardLabel")
         self.lbl_arch_val = QLabel(info.get("architecture", "win64"))
         self.lbl_arch_val.setObjectName("CardValue")
@@ -104,11 +106,11 @@ class ChestsView(QWidget):
 
         # 1. Header Layout: Title & Action Button
         header_layout = QHBoxLayout()
-        self.lbl_title = QLabel("Treasure Chests")
+        self.lbl_title = QLabel(_("chests_title"))
         self.lbl_title.setObjectName("ViewTitle")
         header_layout.addWidget(self.lbl_title)
 
-        self.btn_create = QPushButton("⚓  Create New Chest")
+        self.btn_create = QPushButton(_("btn_create_chest"))
         self.btn_create.setObjectName("BlueBtn")
         self.btn_create.setCursor(Qt.PointingHandCursor)
         self.btn_create.clicked.connect(self.create_requested.emit)
@@ -132,10 +134,18 @@ class ChestsView(QWidget):
         self.scroll_area.setWidget(self.scroll_content)
         layout.addWidget(self.scroll_area, stretch=1)
 
+    def retranslate(self) -> None:
+        """Refreshes static labels and rebuilds cards with the active language."""
+        self.lbl_title.setText(_("chests_title"))
+        self.btn_create.setText(_("btn_create_chest"))
+        if getattr(self, "_last_args", None):
+            self.populate_chests(*self._last_args)
+
     def populate_chests(
         self, prefixes: list[str], games: dict, recipes: dict, prefixes_dir: Path
     ) -> None:
         """Clears and rebuilds the grid of Chest cards."""
+        self._last_args = (prefixes, games, recipes, prefixes_dir)
         # Clear existing widgets
         while self.grid_layout.count():
             item = self.grid_layout.takeAt(0)

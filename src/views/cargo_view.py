@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Slot, Qt
 from pathlib import Path
 
+from i18n import _
+
 
 class MapCard(QFrame):
     """
@@ -42,22 +44,24 @@ class MapCard(QFrame):
         lbl_title.setObjectName("CardTitle")
         header.addWidget(lbl_title, stretch=1)
 
-        lbl_badge = QLabel("⚓ Mapa")
+        lbl_badge = QLabel(_("cargo_card_badge"))
         lbl_badge.setObjectName("BadgePlatinum")
         header.addWidget(lbl_badge)
         layout.addLayout(header)
 
         # Description
-        lbl_desc = QLabel(
-            recipe_data.get("description", "Receta JSON autoportante para compartir.")
-        )
+        lbl_desc = QLabel(recipe_data.get("description", _("cargo_card_desc_default")))
         lbl_desc.setStyleSheet("color: #71717a; font-size: 12px;")
         lbl_desc.setWordWrap(True)
         layout.addWidget(lbl_desc, stretch=1)
 
         # Display required verbs
         verbs = recipe_data.get("required_verbs", [])
-        verbs_text = f"Inyecta: {', '.join(verbs)}" if verbs else "Sin dependencias de winetricks"
+        verbs_text = (
+            _("cargo_card_injects", verbs=", ".join(verbs))
+            if verbs
+            else _("cargo_card_no_verbs")
+        )
         lbl_verbs = QLabel(verbs_text)
         lbl_verbs.setStyleSheet("color: #8e8e93; font-size: 11px; font-style: italic;")
         lbl_verbs.setWordWrap(True)
@@ -65,12 +69,12 @@ class MapCard(QFrame):
 
         # Bottom Row: Category & Install Button
         bottom = QHBoxLayout()
-        lbl_tag = QLabel("Receta JSON")
+        lbl_tag = QLabel(_("cargo_card_tag"))
         lbl_tag.setObjectName("AppTag")
         bottom.addWidget(lbl_tag)
         bottom.addStretch(1)
 
-        self.btn_install = QPushButton("Aplicar Mapa")
+        self.btn_install = QPushButton(_("cargo_btn_apply"))
         self.btn_install.setObjectName("BlueBtn")
         self.btn_install.setCursor(Qt.PointingHandCursor)
         self.btn_install.clicked.connect(
@@ -81,7 +85,7 @@ class MapCard(QFrame):
         self.btn_delete = QPushButton("🗑️")
         self.btn_delete.setObjectName("RedBtn")
         self.btn_delete.setCursor(Qt.PointingHandCursor)
-        self.btn_delete.setToolTip("Eliminar este mapa")
+        self.btn_delete.setToolTip(_("cargo_btn_delete_tooltip"))
         self.btn_delete.clicked.connect(
             lambda: self.delete_clicked.emit(display_name, self.recipe_id)
         )
@@ -111,18 +115,18 @@ class MapasView(QWidget):
         # 1. Header Layout
         header = QVBoxLayout()
         header.setSpacing(4)
-        lbl_title = QLabel("Mapas del Tesoro")
-        lbl_title.setObjectName("ViewTitle")
-        lbl_subtitle = QLabel("Configuraciones y recetas JSON compartibles en config/recipes/")
-        lbl_subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
-        header.addWidget(lbl_title)
-        header.addWidget(lbl_subtitle)
+        self.lbl_title = QLabel(_("cargo_title"))
+        self.lbl_title.setObjectName("ViewTitle")
+        self.lbl_subtitle = QLabel(_("cargo_subtitle"))
+        self.lbl_subtitle.setStyleSheet("color: #71717a; font-size: 13px;")
+        header.addWidget(self.lbl_title)
+        header.addWidget(self.lbl_subtitle)
         layout.addLayout(header)
 
         # 2. Search bar
         filter_layout = QHBoxLayout()
         self.txt_search = QLineEdit()
-        self.txt_search.setPlaceholderText("🔎 Buscar mapa de receta...")
+        self.txt_search.setPlaceholderText(_("cargo_search_placeholder"))
         self.txt_search.textChanged.connect(self._on_filters_changed)
         filter_layout.addWidget(self.txt_search)
         layout.addLayout(filter_layout)
@@ -147,27 +151,33 @@ class MapasView(QWidget):
         about_layout = QVBoxLayout(about_card)
         about_layout.setSpacing(8)
 
-        lbl_about_title = QLabel("🗺️ Sobre los Mapas del Tesoro")
-        lbl_about_title.setObjectName("CardTitle")
-        about_layout.addWidget(lbl_about_title)
+        self.lbl_about_title = QLabel(_("cargo_about_title"))
+        self.lbl_about_title.setObjectName("CardTitle")
+        about_layout.addWidget(self.lbl_about_title)
 
-        lbl_about_desc = QLabel(
-            "Los mapas son archivos JSON autoportantes y compartibles. "
-            "Al aplicar un mapa sobre un cofre (WINEPREFIX), Thatch leerá las dependencias necesarias de Winetricks, "
-            "las comparará con las ya inyectadas para saltarse las existentes e inyectará de forma secuencial "
-            "únicamente las dependencias faltantes, optimizando la instalación y previniendo archivos corruptos o redundantes."
-        )
-        lbl_about_desc.setStyleSheet("color: #71717a; font-size: 12px; line-height: 18px;")
-        lbl_about_desc.setWordWrap(True)
-        about_layout.addWidget(lbl_about_desc)
+        self.lbl_about_desc = QLabel(_("cargo_about_desc"))
+        self.lbl_about_desc.setStyleSheet("color: #71717a; font-size: 12px; line-height: 18px;")
+        self.lbl_about_desc.setWordWrap(True)
+        about_layout.addWidget(self.lbl_about_desc)
 
         layout.addWidget(about_card)
 
         # Initial draw
         self.populate_maps([], {})
 
+    def retranslate(self) -> None:
+        """Refreshes static labels and rebuilds map cards with the active language."""
+        self.lbl_title.setText(_("cargo_title"))
+        self.lbl_subtitle.setText(_("cargo_subtitle"))
+        self.txt_search.setPlaceholderText(_("cargo_search_placeholder"))
+        self.lbl_about_title.setText(_("cargo_about_title"))
+        self.lbl_about_desc.setText(_("cargo_about_desc"))
+        if getattr(self, "_last_args", None):
+            self.populate_maps(*self._last_args)
+
     def populate_maps(self, prefixes: list[str], recipes: dict) -> None:
         """Saves current active prefixes and recipes, drawing the grid."""
+        self._last_args = (prefixes, recipes)
         self.active_prefixes = prefixes
         self.recipes = recipes
         self._render_grid()
@@ -224,16 +234,16 @@ class MapasView(QWidget):
         if not self.active_prefixes:
             QMessageBox.warning(
                 self,
-                "No Chests Found",
-                "¡Necesitas crear al menos un cofre antes de aplicarle un mapa!",
+                _("cargo_error_no_chests_title"),
+                _("cargo_error_no_chests_msg"),
             )
             return
 
         # Dialog selection list of prefixes
         item, ok = QInputDialog.getItem(
             self,
-            "Seleccionar Cofre Destino",
-            f"Selecciona el cofre para aplicar el mapa '{app_name}':",
+            _("cargo_select_prefix_title"),
+            _("cargo_select_prefix_msg", name=app_name),
             self.active_prefixes,
             0,
             False,
@@ -245,8 +255,8 @@ class MapasView(QWidget):
     def _on_delete_clicked(self, app_name: str, recipe_id: str) -> None:
         reply = QMessageBox.question(
             self,
-            "Confirmar Eliminación",
-            f"¿Estás seguro de que quieres eliminar permanentemente el mapa '{app_name}'?",
+            _("cargo_confirm_delete_title"),
+            _("cargo_confirm_delete_msg", name=app_name),
             QMessageBox.Yes | QMessageBox.No,
         )
         if reply == QMessageBox.Yes:
@@ -254,10 +264,14 @@ class MapasView(QWidget):
             try:
                 if file_path.exists():
                     file_path.unlink()
-                QMessageBox.information(self, "Eliminado", "Mapa eliminado correctamente.")
+                QMessageBox.information(
+                    self, _("cargo_deleted_title"), _("cargo_deleted_msg")
+                )
                 self.map_deleted.emit()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"No se pudo eliminar el mapa:\n{e}")
+                QMessageBox.critical(
+                    self, _("cargo_error_title"), _("cargo_delete_failed_msg", error=e)
+                )
 
     @Slot()
     def _on_filters_changed(self) -> None:
